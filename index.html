@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Calendario Eventos</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Prevenir scroll no deseado en móviles */
+        body { overscroll-behavior-y: none; }
+        /* Ocultar scrollbar pero permitir scroll */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-gray-200 font-sans h-screen w-screen overflow-hidden flex justify-center fixed inset-0">
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="w-full max-w-md h-full bg-white flex flex-col relative shadow-2xl overflow-hidden">
+        
+        <!-- Header del Calendario -->
+        <div class="flex items-center justify-between p-2 sm:p-3 bg-white border-b border-gray-200">
+            <button id="btn-prev-month" class="p-2 text-blue-900 hover:bg-blue-50 rounded-full transition-colors cursor-pointer">
+                <i data-lucide="chevron-left" class="w-8 h-8 font-black"></i>
+            </button>
+            <h2 id="month-title" class="text-xl sm:text-2xl font-bold text-blue-900 capitalize tracking-tight">
+                Mes, Año
+            </h2>
+            <button id="btn-next-month" class="p-2 text-blue-900 hover:bg-blue-50 rounded-full transition-colors cursor-pointer">
+                <i data-lucide="chevron-right" class="w-8 h-8 font-black"></i>
+            </button>
+        </div>
+
+        <!-- Días de la semana header -->
+        <div class="grid grid-cols-7 bg-[#1c3c88]" id="weekdays-header">
+            <!-- Se llena con JS -->
+        </div>
+
+        <!-- Grid del calendario -->
+        <div id="calendar-grid" class="grid grid-cols-7 border-l border-t border-gray-200 bg-white">
+            <!-- Se llena con JS -->
+        </div>
+
+        <!-- Separador negro de fecha actual -->
+        <div id="date-banner" class="bg-black text-white text-center py-2 sm:py-3 text-[17px] sm:text-lg font-bold z-10 flex items-center justify-center shadow-md">
+            Fecha Actual
+        </div>
+
+        <!-- Lista de Notas -->
+        <div id="notes-list" class="flex-1 overflow-y-auto bg-white divide-y divide-gray-200 border-b border-gray-200">
+            <!-- Se llena con JS -->
+        </div>
+
+        <!-- Footer - Botones -->
+        <div class="bg-white p-3 sm:p-4 flex justify-between gap-3 shadow-[0_-5px_15px_rgba(0,0,0,0.08)] z-20">
+            <button id="btn-today" class="px-5 py-3 font-bold text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition-colors text-lg flex items-center justify-center">
+                HOY
+            </button>
+            <button id="btn-add-event" class="flex-1 bg-white text-gray-800 font-bold py-3 rounded-xl border-2 border-red-600 hover:bg-red-50 transition-colors flex justify-center items-center gap-2 text-lg">
+                <i data-lucide="calendar" class="w-6 h-6 text-red-600"></i> Agregar Evento
+            </button>
+        </div>
+
+        <!-- MODAL: EDITOR DE NOTAS -->
+        <div id="editor-modal" class="hidden absolute inset-0 z-50 bg-white flex flex-col transition-transform">
+            <div class="flex items-center justify-between px-4 h-16 bg-[#1c3c88] text-white shadow-md">
+                <button id="btn-close-editor" class="p-2 hover:bg-blue-800 rounded-full transition-colors text-white">
+                    <i data-lucide="x" class="w-7 h-7"></i>
+                </button>
+                <div id="editor-title" class="text-center font-bold text-xl">
+                    Pegar WhatsApp
+                </div>
+                <button id="btn-save-note" class="font-bold px-3 py-2 bg-blue-700 rounded-lg text-white hover:bg-blue-600 transition-colors disabled:opacity-50">
+                    Guardar
+                </button>
+            </div>
+            <div class="flex-1 relative bg-gray-100 p-4">
+                <textarea id="note-textarea" placeholder="Pega la nota directamente aquí..." class="w-full h-full p-5 bg-white border border-gray-300 rounded-2xl shadow-inner resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg sm:text-xl text-gray-800 placeholder-gray-400 font-medium leading-relaxed"></textarea>
+            </div>
+        </div>
+
+        <!-- MODAL: VISTA PREVIA -->
+        <div id="preview-modal" class="hidden absolute inset-0 z-40 bg-black/50 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl flex flex-col overflow-hidden" onclick="event.stopPropagation()">
+                <div class="bg-[#1c3c88] text-white p-3 sm:p-4 flex justify-between items-center">
+                    <h3 class="font-bold text-lg">Detalle del Evento</h3>
+                    <button id="btn-close-preview" class="p-1 hover:bg-blue-800 rounded-full transition-colors text-white">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+                <div class="p-5 max-h-[60vh] overflow-y-auto bg-gray-50 border-b border-gray-200">
+                    <p id="preview-text" class="text-gray-800 text-base sm:text-lg whitespace-pre-wrap font-medium leading-relaxed"></p>
+                </div>
+                <div class="bg-white p-3 flex justify-end gap-3">
+                    <button id="btn-preview-delete" class="px-4 py-2 text-red-600 font-bold bg-red-50 border border-red-100 hover:bg-red-100 rounded-xl transition-colors">
+                        Eliminar
+                    </button>
+                    <button id="btn-preview-edit" class="px-6 py-2 text-white font-bold bg-blue-700 hover:bg-blue-600 rounded-xl shadow-md transition-colors">
+                        Editar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SCRIPT DE LA APLICACIÓN -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- CONFIGURACIÓN DE FIREBASE ---
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // --- UTILIDADES DE FECHA ---
+        const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const DAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        const DAY_NAMES_SHORT = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+        const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+        const getFirstDayOfMonth = (year, month) => {
+            const day = new Date(year, month, 1).getDay();
+            return day === 0 ? 6 : day - 1; // Lunes = 0, Domingo = 6
+        };
+        const isSameDay = (date1, date2) => {
+            if (!date1 || !date2) return false;
+            return date1.getFullYear() === date2.getFullYear() && date1.getMonth() === date2.getMonth() && date1.getDate() === date2.getDate();
+        };
+        const formatDateKey = (date) => {
+            if (!date) return '';
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        };
+
+        // --- ESTADO GLOBAL ---
+        let user = null;
+        let notes = [];
+        let currentDate = new Date();
+        let selectedDate = new Date();
+        let editingNoteId = null;
+        let previewNoteObj = null;
+        let unsubscribeSnapshot = null;
+
+        // --- ELEMENTOS DEL DOM ---
+        const elMonthTitle = document.getElementById('month-title');
+        const elCalendarGrid = document.getElementById('calendar-grid');
+        const elDateBanner = document.getElementById('date-banner');
+        const elNotesList = document.getElementById('notes-list');
+        const elTextarea = document.getElementById('note-textarea');
+        const elBtnSaveNote = document.getElementById('btn-save-note');
+
+        // --- INICIALIZAR ENCABEZADOS DE DÍAS ---
+        const initWeekdays = () => {
+            const header = document.getElementById('weekdays-header');
+            DAY_NAMES_SHORT.forEach(day => {
+                const div = document.createElement('div');
+                div.className = "text-center py-1.5 text-[13px] sm:text-sm font-bold text-white tracking-wide";
+                div.textContent = day; // Blindado
+                header.appendChild(div);
+            });
+        };
+
+        // --- RENDERIZADO DEL CALENDARIO ---
+        const updateUI = () => {
+            renderCalendar();
+            renderBanner();
+            renderNotes();
+            lucide.createIcons(); // Refrescar iconos
+        };
+
+        const renderCalendar = () => {
+            elCalendarGrid.innerHTML = ''; // Limpiar
+            elMonthTitle.textContent = `${MONTH_NAMES[currentDate.getMonth()]}, ${currentDate.getFullYear()}`;
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const daysInMonth = getDaysInMonth(year, month);
+            const firstDayIndex = getFirstDayOfMonth(year, month);
+
+            // Agrupar notas para búsqueda rápida
+            const notesByDate = {};
+            notes.forEach(n => {
+                if (!notesByDate[n.dateKey]) notesByDate[n.dateKey] = [];
+                notesByDate[n.dateKey].push(n);
+            });
+
+            // Días vacíos previos
+            for (let i = 0; i < firstDayIndex; i++) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = "border-r border-b border-gray-200 bg-gray-50/50 aspect-[5/4] sm:aspect-square";
+                elCalendarGrid.appendChild(emptyDiv);
+            }
+
+            // Días del mes
+            for (let i = 1; i <= daysInMonth; i++) {
+                const date = new Date(year, month, i);
+                const isToday = isSameDay(date, new Date());
+                const isSelected = isSameDay(date, selectedDate);
+                const dateKey = formatDateKey(date);
+                const dayNotes = notesByDate[dateKey] || [];
+                const hasNotes = dayNotes.length > 0;
+                const dayOfWeek = (firstDayIndex + i - 1) % 7;
+                const isWeekend = dayOfWeek === 5 || dayOfWeek === 6;
+
+                const cell = document.createElement('div');
+                cell.className = `border-r border-b border-gray-200 aspect-[5/4] sm:aspect-square flex flex-col items-center justify-center relative cursor-pointer transition-colors ${isSelected ? 'bg-blue-100 border-2 border-blue-500 z-10' : hasNotes ? 'bg-amber-100 hover:bg-amber-200' : 'bg-white hover:bg-gray-50'}`;
+                
+                cell.onclick = () => {
+                    selectedDate = date;
+                    currentDate = new Date(date); // Mantiene el mes actual sincronizado
+                    updateUI();
+                };
+
+                const span = document.createElement('span');
+                span.className = `text-lg sm:text-xl font-medium z-10 ${isToday && !isSelected ? 'text-red-600 font-bold' : ''} ${isWeekend && !isSelected && !isToday ? 'text-blue-700' : ''} ${!isWeekend && !isSelected && !isToday ? 'text-black font-bold' : ''} ${isSelected ? 'text-blue-900 font-bold' : ''}`;
+                span.textContent = i; // Blindado
+
+                cell.appendChild(span);
+
+                if (hasNotes) {
+                    const dot = document.createElement('div');
+                    dot.className = "absolute bottom-1.5 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-red-500 rounded-full shadow-sm";
+                    cell.appendChild(dot);
+                }
+
+                elCalendarGrid.appendChild(cell);
+            }
+        };
+
+        const renderBanner = () => {
+            elDateBanner.textContent = `${DAY_NAMES[selectedDate.getDay()]}, ${selectedDate.getDate()} ${MONTH_NAMES[selectedDate.getMonth()].toLowerCase()} ${selectedDate.getFullYear()}`;
+        };
+
+        const renderNotes = () => {
+            elNotesList.innerHTML = '';
+            const dateKey = formatDateKey(selectedDate);
+            const selectedDayNotes = notes.filter(n => n.dateKey === dateKey);
+
+            if (selectedDayNotes.length === 0) {
+                elNotesList.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-12 text-gray-400">
+                        <p class="text-lg">No hay eventos guardados.</p>
+                    </div>`;
+                return;
+            }
+
+            selectedDayNotes.forEach(note => {
+                const noteDiv = document.createElement('div');
+                noteDiv.className = "p-3 sm:p-4 flex items-start gap-4 hover:bg-gray-50 transition-colors cursor-pointer active:bg-gray-100";
+                
+                // Acción de Vista Previa al tocar la nota
+                noteDiv.onclick = () => openPreview(note);
+
+                // Icono Izquierdo
+                const iconContainer = document.createElement('div');
+                iconContainer.className = "w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0 text-purple-800 border-2 border-purple-100";
+                iconContainer.innerHTML = '<i data-lucide="align-left" class="w-6 h-6"></i>';
+
+                // Texto Central Seguro (Blindado contra XSS)
+                const textContainer = document.createElement('div');
+                textContainer.className = "flex-1 min-w-0 pt-0.5 pointer-events-none";
+                const pText = document.createElement('p');
+                pText.className = "text-gray-900 text-[15px] sm:text-base whitespace-pre-wrap font-medium leading-tight line-clamp-3";
+                pText.textContent = note.content; // PROTECCIÓN TOTAL XSS
+                const pHint = document.createElement('p');
+                pHint.className = "text-blue-600 text-xs mt-1.5 font-bold opacity-80 flex items-center";
+                pHint.innerHTML = '<i data-lucide="mouse-pointer-click" class="w-3.5 h-3.5 mr-1"></i> Tocar para ver completo';
+                textContainer.appendChild(pText);
+                textContainer.appendChild(pHint);
+
+                // Botones Acciones
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = "flex flex-col gap-2 flex-shrink-0";
+                
+                const btnEdit = document.createElement('button');
+                btnEdit.className = "p-2 text-blue-900 bg-blue-50 border border-blue-200 shadow-sm hover:bg-blue-100 rounded-lg transition-colors";
+                btnEdit.innerHTML = '<i data-lucide="edit-2" class="w-5 h-5"></i>';
+                btnEdit.onclick = (e) => { e.stopPropagation(); openEditor(note); };
+
+                const btnDelete = document.createElement('button');
+                btnDelete.className = "p-2 text-blue-900 bg-blue-50 border border-blue-200 shadow-sm hover:bg-blue-100 rounded-lg transition-colors";
+                btnDelete.innerHTML = '<i data-lucide="trash-2" class="w-5 h-5"></i>';
+                btnDelete.onclick = (e) => { e.stopPropagation(); deleteNoteAction(note.id); };
+
+                actionsDiv.appendChild(btnEdit);
+                actionsDiv.appendChild(btnDelete);
+
+                noteDiv.appendChild(iconContainer);
+                noteDiv.appendChild(textContainer);
+                noteDiv.appendChild(actionsDiv);
+
+                elNotesList.appendChild(noteDiv);
+            });
+        };
+
+        // --- OPERACIONES DE BASE DE DATOS (FIREBASE) ---
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Error de autenticación:", error);
+            }
+        };
+
+        onAuthStateChanged(auth, (currentUser) => {
+            user = currentUser;
+            if (user) {
+                if(unsubscribeSnapshot) unsubscribeSnapshot();
+                const notesRef = collection(db, 'artifacts', appId, 'users', user.uid, 'notes');
+                unsubscribeSnapshot = onSnapshot(notesRef, (snapshot) => {
+                    notes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    updateUI();
+                }, (error) => console.error("Error obteniendo notas:", error));
+            }
+        });
+
+        const saveNoteAction = async () => {
+            const content = elTextarea.value.trim();
+            if (!content || !user || !selectedDate) return;
+
+            elBtnSaveNote.disabled = true;
+            const dateKey = formatDateKey(selectedDate);
+            const notesRef = collection(db, 'artifacts', appId, 'users', user.uid, 'notes');
+
+            try {
+                if (editingNoteId) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'notes', editingNoteId), {
+                        content: content,
+                        updatedAt: Date.now()
+                    });
+                } else {
+                    await addDoc(notesRef, {
+                        dateKey: dateKey,
+                        content: content,
+                        createdAt: Date.now(),
+                        updatedAt: Date.now()
+                    });
+                }
+                closeEditor();
+            } catch (error) {
+                console.error("Error guardando la nota:", error);
+            } finally {
+                elBtnSaveNote.disabled = false;
+            }
+        };
+
+        const deleteNoteAction = async (noteId) => {
+            if (!user) return;
+            if(window.confirm("¿Eliminar esta nota permanentemente?")) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'notes', noteId));
+                } catch (error) {
+                    console.error("Error eliminando:", error);
+                }
+            }
+        };
+
+        // --- CONTROLADORES DE MODALES Y UI ---
+        const openEditor = (note = null) => {
+            document.getElementById('editor-modal').classList.remove('hidden');
+            if (note) {
+                editingNoteId = note.id;
+                elTextarea.value = note.content;
+                document.getElementById('editor-title').textContent = 'Editar Evento';
+            } else {
+                editingNoteId = null;
+                elTextarea.value = '';
+                document.getElementById('editor-title').textContent = 'Pegar WhatsApp';
+            }
+            elTextarea.focus();
+            validateTextarea();
+        };
+
+        const closeEditor = () => {
+            document.getElementById('editor-modal').classList.add('hidden');
+            editingNoteId = null;
+            elTextarea.value = '';
+        };
+
+        const openPreview = (note) => {
+            previewNoteObj = note;
+            document.getElementById('preview-modal').classList.remove('hidden');
+            // BLINDADO: Usar textContent
+            document.getElementById('preview-text').textContent = note.content;
+        };
+
+        const closePreview = () => {
+            document.getElementById('preview-modal').classList.add('hidden');
+            previewNoteObj = null;
+        };
+
+        const validateTextarea = () => {
+            elBtnSaveNote.disabled = elTextarea.value.trim().length === 0;
+        };
+
+        // --- EVENT LISTENERS ---
+        document.getElementById('btn-prev-month').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1); updateUI();
+        });
+        document.getElementById('btn-next-month').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1); updateUI();
+        });
+        document.getElementById('btn-today').addEventListener('click', () => {
+            currentDate = new Date(); selectedDate = new Date(); updateUI();
+        });
+        document.getElementById('btn-add-event').addEventListener('click', () => openEditor());
+        
+        // Editor
+        document.getElementById('btn-close-editor').addEventListener('click', closeEditor);
+        elBtnSaveNote.addEventListener('click', saveNoteAction);
+        elTextarea.addEventListener('input', validateTextarea);
+
+        // Preview
+        document.getElementById('preview-modal').addEventListener('click', closePreview);
+        document.getElementById('btn-close-preview').addEventListener('click', closePreview);
+        document.getElementById('btn-preview-delete').addEventListener('click', () => {
+            const id = previewNoteObj.id;
+            closePreview();
+            deleteNoteAction(id);
+        });
+        document.getElementById('btn-preview-edit').addEventListener('click', () => {
+            const n = previewNoteObj;
+            closePreview();
+            openEditor(n);
+        });
+
+        // --- INICIO DE LA APP ---
+        initWeekdays();
+        updateUI();
+        initAuth();
+
+    </script>
+</body>
+</html>
