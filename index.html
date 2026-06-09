@@ -20,25 +20,31 @@
 </head>
 <body class="font-sans h-screen w-screen overflow-hidden flex justify-center items-center fixed inset-0 select-none">
 
-    <!-- CONTENEDOR PRINCIPAL (Simula un celular en Desktop) -->
+    <!-- CONTENEDOR PRINCIPAL -->
     <div class="w-full max-w-md h-full bg-[#f4f5f7] flex flex-col relative overflow-hidden shadow-2xl sm:h-[90vh] sm:rounded-[2.5rem] sm:border-[8px] sm:border-gray-900 bg-cover bg-center">
         
         <!-- HEADER BLANCO CURVO -->
         <div class="bg-white rounded-b-[2rem] shadow-[0_4px_20px_rgba(0,0,0,0.03)] z-20 relative pb-2">
             
-            <!-- Barra Superior (Mes, Hoy, Flechas) -->
+            <!-- Barra Superior (Mes, Hoy, Flechas, Sync) -->
             <div class="flex items-center justify-between pt-6 pb-2 px-5">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
                     <h2 id="month-title" class="text-2xl font-black text-gray-800 capitalize tracking-tight">Mes, Año</h2>
                 </div>
                 <div class="flex items-center gap-1">
-                    <button id="btn-today" class="mr-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-full smooth-transition active:scale-95">
+                    <!-- Botón de Respaldo Nube -->
+                    <button id="btn-sync" class="mr-2 p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-full smooth-transition active:scale-95 relative" title="Respaldar en la nube">
+                        <i id="sync-icon" data-lucide="cloud-off" class="w-5 h-5 text-gray-500"></i>
+                        <span id="sync-badge" class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
+                    </button>
+
+                    <button id="btn-today" class="mr-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-full smooth-transition active:scale-95">
                         HOY
                     </button>
-                    <button id="btn-prev-month" class="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full smooth-transition active:scale-95">
+                    <button id="btn-prev-month" class="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full smooth-transition active:scale-95">
                         <i data-lucide="chevron-left" class="w-6 h-6"></i>
                     </button>
-                    <button id="btn-next-month" class="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full smooth-transition active:scale-95">
+                    <button id="btn-next-month" class="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full smooth-transition active:scale-95">
                         <i data-lucide="chevron-right" class="w-6 h-6"></i>
                     </button>
                 </div>
@@ -75,11 +81,9 @@
             <i data-lucide="plus" class="w-7 h-7"></i>
         </button>
 
-        <!-- MODAL: EDITOR DE NOTAS (Ventana Flotante Estilo iOS) -->
-        <!-- Se ajustó a "items-start" y un padding top moderado para darle todo el espacio al teclado virtual -->
-        <div id="editor-modal" class="fixed inset-0 z-50 bg-black/50 flex items-start sm:items-center justify-center p-4 pt-4 sm:p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
-            <!-- Altura flexible con max-h-[85%] para que se encoja inteligentemente cuando aparezca el teclado -->
-            <div id="editor-card" class="bg-white w-full max-w-sm h-[450px] max-h-[85%] sm:max-h-[85vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition">
+        <!-- MODAL: EDITOR DE NOTAS (Con altura inteligente para Teclado) -->
+        <div id="editor-modal" class="fixed inset-0 z-50 bg-black/50 flex items-start pt-10 sm:items-center justify-center p-4 sm:p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
+            <div id="editor-card" class="bg-white w-full max-w-sm h-[380px] sm:h-[450px] max-h-[85vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition">
                 
                 <!-- Cabecera del Editor -->
                 <div class="flex items-center justify-between px-6 pb-4 pt-5 border-b border-gray-100 bg-white shrink-0">
@@ -90,19 +94,18 @@
                 
                 <!-- Área de Trabajo -->
                 <div class="flex-1 bg-gray-50 p-4 flex flex-col gap-3 overflow-hidden">
-                    <!-- Botón Pegar -->
                     <div class="flex justify-end shrink-0">
                         <button id="btn-paste-text" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] active:bg-gray-50 active:scale-95 smooth-transition font-bold text-sm">
                             <i data-lucide="clipboard-paste" class="w-4 h-4 text-blue-600"></i> Pegar texto
                         </button>
                     </div>
                     
-                    <textarea id="note-textarea" placeholder="Pega el texto de WhatsApp aquí..." class="w-full flex-1 min-h-[100px] p-5 bg-white border border-gray-200 rounded-2xl shadow-sm resize-none focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 text-lg text-gray-800 placeholder-gray-400 leading-relaxed"></textarea>
+                    <textarea id="note-textarea" placeholder="Pega el texto de WhatsApp aquí..." class="w-full flex-1 p-5 bg-white border border-gray-200 rounded-2xl shadow-sm resize-none focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 text-lg text-gray-800 placeholder-gray-400 leading-relaxed"></textarea>
                 </div>
             </div>
         </div>
 
-        <!-- MODAL: VISTA PREVIA (Estilo Pop-up iOS) -->
+        <!-- MODAL: VISTA PREVIA -->
         <div id="preview-modal" class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
             <div id="preview-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition">
                 <div class="p-6 max-h-[60vh] overflow-y-auto no-scrollbar relative">
@@ -126,30 +129,55 @@
             </div>
         </div>
 
+        <!-- MODAL: SINCRONIZACIÓN GOOGLE -->
+        <div id="sync-modal" class="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
+            <div id="sync-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition p-6 text-center relative">
+                <button id="btn-close-sync" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+                
+                <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-500">
+                    <i data-lucide="cloud" class="w-8 h-8"></i>
+                </div>
+                
+                <h3 id="sync-title" class="text-xl font-black text-gray-900 mb-2">Respaldar Calendario</h3>
+                <p id="sync-desc" class="text-sm text-gray-600 mb-6 leading-relaxed">
+                    Tus eventos están guardados solo en este dispositivo. Inicia sesión con Google para respaldarlos en la nube y verlos en otros celulares o tablets.
+                </p>
+                
+                <button id="btn-google-login" class="w-full flex items-center justify-center gap-3 py-3.5 bg-gray-900 text-white font-bold rounded-xl active:scale-95 smooth-transition">
+                    <i data-lucide="user-check" class="w-5 h-5"></i> Iniciar con Google
+                </button>
+            </div>
+        </div>
+
     </div>
 
     <!-- SCRIPT DE LA APLICACIÓN -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // Importamos los proveedores de Google para hacer el "Account Linking"
+        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, linkWithPopup, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- CONFIGURACIÓN DE FIREBASE ---
-        const fallbackConfig = {}; 
-        const firebaseConfig = typeof __firebase_config !== 'undefined' && __firebase_config ? JSON.parse(__firebase_config) : fallbackConfig;
+        // --- CONFIGURACIÓN DE FIREBASE ACTUALIZADA ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDOX-xR-Bv-tWDmIQmuYYfYo0DSqiNBTVM",
+            authDomain: "calendarioeqb.firebaseapp.com",
+            projectId: "calendarioeqb",
+            storageBucket: "calendarioeqb.firebasestorage.app",
+            messagingSenderId: "724326817821",
+            appId: "1:724326817821:web:c946c98ae27c6c368fa6f4"
+        };
             
-        let app, auth, db;
-        let isFirebaseConfigured = false;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'mi-app-calendario-seguro';
-
-        try {
-            if (Object.keys(firebaseConfig).length > 0) {
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-                isFirebaseConfigured = true;
-            }
-        } catch (error) { console.error(error); }
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const googleProvider = new GoogleAuthProvider();
+        googleProvider.setCustomParameters({ prompt: 'select_account' });
+        
+        // Identificador estandarizado de aplicación para prevenir permission-denied
+        const targetAppId = typeof __app_id !== 'undefined' ? __app_id : 'mi-app-calendario-seguro';
 
         // --- UTILIDADES ---
         const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -182,9 +210,17 @@
         const elTextarea = document.getElementById('note-textarea');
         const elBtnSaveNote = document.getElementById('btn-save-note');
         const elBtnPasteText = document.getElementById('btn-paste-text');
-        const elScrollArea = document.getElementById('main-scroll-area'); // Area de scroll
+        const elScrollArea = document.getElementById('main-scroll-area');
 
-        // --- INICIALIZAR ENCABEZADOS ---
+        // Modales
+        const modalEditor = document.getElementById('editor-modal');
+        const cardEditor = document.getElementById('editor-card');
+        const modalPreview = document.getElementById('preview-modal');
+        const cardPreview = document.getElementById('preview-card');
+        const modalSync = document.getElementById('sync-modal');
+        const cardSync = document.getElementById('sync-card');
+
+        // --- RENDERIZADO DEL CALENDARIO ---
         const initWeekdays = () => {
             const header = document.getElementById('weekdays-header');
             DAY_NAMES_SHORT.forEach(day => {
@@ -195,11 +231,32 @@
             });
         };
 
-        // --- RENDERIZADO ---
         const updateUI = () => {
             renderCalendar();
             renderBanner();
             renderNotes();
+            updateAuthUI();
+            lucide.createIcons();
+        };
+
+        // --- ACTUALIZAR INTERFAZ DE AUTENTICACIÓN (NUBE) ---
+        const updateAuthUI = () => {
+            const btnSync = document.getElementById('btn-sync');
+            
+            // Reemplazamos todo el HTML interno para evitar errores con SVG elements y className
+            if (user && !user.isAnonymous) {
+                // Respaldado con Google
+                btnSync.innerHTML = `
+                    <i data-lucide="cloud-check" class="w-5 h-5 text-green-600"></i>
+                    <span id="sync-badge" class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
+                `;
+            } else {
+                // Anónimo (solo en dispositivo)
+                btnSync.innerHTML = `
+                    <i data-lucide="cloud-off" class="w-5 h-5 text-gray-500"></i>
+                    <span id="sync-badge" class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
+                `;
+            }
             lucide.createIcons();
         };
 
@@ -241,7 +298,6 @@
                     updateUI();
                 };
 
-                // Estilos modernos para el círculo del día
                 let circleClass = "w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-[15px] sm:text-base font-medium smooth-transition ";
                 if (isSelected) {
                     circleClass += "bg-gray-900 text-white shadow-md transform scale-110";
@@ -257,7 +313,6 @@
 
                 cell.appendChild(span);
 
-                // Puntito indicador moderno
                 if (hasNotes) {
                     const dot = document.createElement('div');
                     dot.className = `absolute bottom-1 w-1.5 h-1.5 rounded-full smooth-transition ${isSelected ? 'bg-white' : 'bg-red-500'}`;
@@ -319,28 +374,88 @@
             });
         };
 
-        // --- FLUJO DATOS ---
+        // --- LÓGICA DE AUTENTICACIÓN (OPCIÓN 1: ANÓNIMO A GOOGLE) ---
         const initDataFlow = async () => {
             initWeekdays();
             updateUI();
 
-            if (isFirebaseConfigured) {
-                try {
-                    await signInAnonymously(auth);
-                    onAuthStateChanged(auth, (currentUser) => {
-                        user = currentUser;
-                        if (user) {
-                            if(unsubscribeSnapshot) unsubscribeSnapshot();
-                            const targetAppId = appId || 'mi-app-calendario-seguro';
-                            const notesRef = collection(db, 'artifacts', targetAppId, 'users', user.uid, 'notes');
-                            unsubscribeSnapshot = onSnapshot(notesRef, (snapshot) => {
-                                notes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                                updateUI();
-                            });
-                        }
+            try {
+                onAuthStateChanged(auth, async (currentUser) => {
+                    // Si no hay usuario al entrar, creamos el "fantasma" (Anónimo)
+                    if (!currentUser) {
+                        await signInAnonymously(auth);
+                        return; // Se volverá a disparar onAuthStateChanged
+                    }
+                    
+                    user = currentUser;
+                    
+                    // Escuchar las notas en tiempo real
+                    if(unsubscribeSnapshot) unsubscribeSnapshot();
+                    
+                    // Aseguramos una ruta robusta para Firestore
+                    const notesRef = collection(db, 'artifacts', targetAppId, 'users', user.uid, 'notes');
+                    
+                    unsubscribeSnapshot = onSnapshot(notesRef, (snapshot) => {
+                        notes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        updateUI();
+                    }, (error) => {
+                        console.error("Error al obtener los datos de Firestore (verifica las reglas):", error);
                     });
-                } catch (error) { console.error("Error:", error); }
+                });
+            } catch (error) { 
+                console.error("Error iniciando app:", error); 
             }
+        };
+
+        const handleGoogleLogin = async () => {
+            try {
+                if (user && user.isAnonymous) {
+                    // Si el usuario es anónimo, VINCULAMOS la cuenta. Sus notas se migrarán a su Gmail.
+                    await linkWithPopup(user, googleProvider);
+                    alert("¡Éxito! Tus notas ahora están respaldadas en tu cuenta de Google.");
+                } else {
+                    // Si no tiene cuenta o ya tenía una antes en otro cel, iniciamos sesión normal
+                    await signInWithPopup(auth, googleProvider);
+                }
+                closeSync();
+                updateUI();
+            } catch (error) {
+                if (error.code === 'auth/credential-already-in-use') {
+                    // Significa que ese Gmail ya tenía un calendario guardado. Entramos a ese en vez del anónimo.
+                    try {
+                        await signInWithPopup(auth, googleProvider);
+                        alert("Has iniciado sesión. Se han cargado las notas que tenías en la nube.");
+                        closeSync();
+                    } catch (e) { console.error(e); }
+                } else {
+                    console.error("Error conectando con Google:", error);
+                    alert("Hubo un error al conectar con Google.");
+                }
+            }
+        };
+
+        const openSync = () => {
+            if (user && !user.isAnonymous) {
+                // Ya está logueado, le ofrecemos cerrar sesión
+                if(window.confirm("Ya tienes tu calendario respaldado. ¿Deseas cerrar sesión en este dispositivo?")) {
+                    signOut(auth);
+                    window.location.reload(); // Recargar para crear una nueva sesión en blanco
+                }
+                return;
+            }
+            
+            // Mostrar modal para invitar a iniciar sesión
+            elScrollArea.classList.replace('overflow-y-auto', 'overflow-hidden');
+            modalSync.classList.remove('pointer-events-none', 'opacity-0');
+            setTimeout(() => cardSync.classList.replace('scale-95', 'scale-100'), 10);
+        };
+
+        const closeSync = () => {
+            cardSync.classList.replace('scale-100', 'scale-95');
+            setTimeout(() => {
+                modalSync.classList.add('opacity-0', 'pointer-events-none');
+                elScrollArea.classList.replace('overflow-hidden', 'overflow-y-auto');
+            }, 200);
         };
 
         // --- ACCIONES DE NOTA ---
@@ -352,42 +467,28 @@
             elBtnSaveNote.disabled = true;
 
             try {
-                if (isFirebaseConfigured && user) {
-                    const targetAppId = appId || 'mi-app-calendario-seguro';
-                    const notesRef = collection(db, 'artifacts', targetAppId, 'users', user.uid, 'notes');
-                    if (editingNoteId) {
-                        await updateDoc(doc(db, 'artifacts', targetAppId, 'users', user.uid, 'notes', editingNoteId), {
-                            content: content, updatedAt: Date.now()
-                        });
-                    } else {
-                        await addDoc(notesRef, {
-                            dateKey: dateKey, content: content, createdAt: Date.now(), updatedAt: Date.now()
-                        });
-                    }
+                const notesRef = collection(db, 'artifacts', targetAppId, 'users', user.uid, 'notes');
+                if (editingNoteId) {
+                    await updateDoc(doc(db, 'artifacts', targetAppId, 'users', user.uid, 'notes', editingNoteId), {
+                        content: content, updatedAt: Date.now()
+                    });
                 } else {
-                    if (editingNoteId) {
-                        const index = notes.findIndex(n => n.id === editingNoteId);
-                        if(index > -1) notes[index].content = content;
-                    } else {
-                        notes.push({ id: Date.now().toString(), dateKey: dateKey, content: content, createdAt: Date.now(), updatedAt: Date.now() });
-                    }
-                    updateUI();
+                    await addDoc(notesRef, {
+                        dateKey: dateKey, content: content, createdAt: Date.now(), updatedAt: Date.now()
+                    });
                 }
                 closeEditor();
-            } catch (error) { console.error(error); } 
+            } catch (error) { 
+                console.error("Error al guardar:", error); 
+                alert("No se pudo guardar. Verifica tu conexión y los permisos.");
+            } 
             finally { elBtnSaveNote.disabled = false; }
         };
 
         const deleteNoteAction = async (noteId) => {
             if(window.confirm("¿Eliminar este evento permanentemente?")) {
                 try {
-                    if (isFirebaseConfigured && user) {
-                        const targetAppId = appId || 'mi-app-calendario-seguro';
-                        await deleteDoc(doc(db, 'artifacts', targetAppId, 'users', user.uid, 'notes', noteId));
-                    } else {
-                        notes = notes.filter(n => n.id !== noteId);
-                        updateUI();
-                    }
+                    await deleteDoc(doc(db, 'artifacts', targetAppId, 'users', user.uid, 'notes', noteId));
                 } catch (error) { console.error(error); }
             }
         };
@@ -396,37 +497,22 @@
             try {
                 const text = await navigator.clipboard.readText();
                 if (text) {
-                    if (elTextarea.value) {
-                        elTextarea.value += '\n' + text;
-                    } else {
-                        elTextarea.value = text;
-                    }
+                    if (elTextarea.value) { elTextarea.value += '\n' + text; } 
+                    else { elTextarea.value = text; }
                     validateTextarea();
-                    elTextarea.focus();
+                    // Evitar autoFocus en móviles para no activar el teclado accidentalmente
+                    if(window.innerWidth > 640) elTextarea.focus();
                 }
             } catch (err) {
-                console.error('Error accediendo al portapapeles: ', err);
                 alert('Tu navegador ha bloqueado el acceso al portapapeles. Por favor, mantén presionado el cuadro de texto y selecciona "Pegar".');
             }
         };
 
-        // --- MODALES Y BLOQUEO DE SCROLL ---
-        const modalEditor = document.getElementById('editor-modal');
-        const cardEditor = document.getElementById('editor-card');
-        const modalPreview = document.getElementById('preview-modal');
-        const cardPreview = document.getElementById('preview-card');
-
+        // --- CONTROL DE MODALES (Bloqueo de fondo) ---
         const openEditor = (note = null) => {
-            // BLOQUEAR SCROLL DE FONDO
-            elScrollArea.classList.remove('overflow-y-auto');
-            elScrollArea.classList.add('overflow-hidden');
-
-            modalEditor.classList.remove('pointer-events-none');
-            modalEditor.classList.remove('opacity-0');
-            setTimeout(() => {
-                cardEditor.classList.remove('scale-95');
-                cardEditor.classList.add('scale-100');
-            }, 10);
+            elScrollArea.classList.replace('overflow-y-auto', 'overflow-hidden');
+            modalEditor.classList.remove('pointer-events-none', 'opacity-0');
+            setTimeout(() => cardEditor.classList.replace('scale-95', 'scale-100'), 10);
             
             if (note) {
                 editingNoteId = note.id;
@@ -437,64 +523,44 @@
                 elTextarea.value = '';
                 document.getElementById('editor-title').textContent = 'Nueva Nota';
             }
-            // Dar auto focus sin usar la función "scrollIntoView" que causaba el salto
-            elTextarea.focus();
             validateTextarea();
         };
 
         const closeEditor = () => {
-            cardEditor.classList.remove('scale-100');
-            cardEditor.classList.add('scale-95');
+            cardEditor.classList.replace('scale-100', 'scale-95');
             setTimeout(() => {
-                modalEditor.classList.add('opacity-0');
-                modalEditor.classList.add('pointer-events-none');
+                modalEditor.classList.add('opacity-0', 'pointer-events-none');
                 editingNoteId = null;
                 elTextarea.value = '';
-
-                // DESBLOQUEAR SCROLL DE FONDO
-                elScrollArea.classList.remove('overflow-hidden');
-                elScrollArea.classList.add('overflow-y-auto');
+                elScrollArea.classList.replace('overflow-hidden', 'overflow-y-auto');
             }, 200);
         };
 
         const openPreview = (note) => {
-            // BLOQUEAR SCROLL DE FONDO
-            elScrollArea.classList.remove('overflow-y-auto');
-            elScrollArea.classList.add('overflow-hidden');
-
+            elScrollArea.classList.replace('overflow-y-auto', 'overflow-hidden');
             previewNoteObj = note;
             document.getElementById('preview-text').textContent = note.content;
             
-            modalPreview.classList.remove('pointer-events-none');
-            modalPreview.classList.remove('opacity-0');
-            setTimeout(() => {
-                cardPreview.classList.remove('scale-95');
-                cardPreview.classList.add('scale-100');
-            }, 10);
+            modalPreview.classList.remove('pointer-events-none', 'opacity-0');
+            setTimeout(() => cardPreview.classList.replace('scale-95', 'scale-100'), 10);
         };
 
         const closePreview = () => {
-            cardPreview.classList.remove('scale-100');
-            cardPreview.classList.add('scale-95');
+            cardPreview.classList.replace('scale-100', 'scale-95');
             setTimeout(() => {
-                modalPreview.classList.add('opacity-0');
-                modalPreview.classList.add('pointer-events-none');
+                modalPreview.classList.add('opacity-0', 'pointer-events-none');
                 previewNoteObj = null;
-
-                // DESBLOQUEAR SCROLL DE FONDO
-                elScrollArea.classList.remove('overflow-hidden');
-                elScrollArea.classList.add('overflow-y-auto');
+                elScrollArea.classList.replace('overflow-hidden', 'overflow-y-auto');
             }, 200);
         };
 
-        // EVITAR "RUBBER-BANDING" EN DISPOSITIVOS TÁCTILES CUANDO EL MODAL ESTÁ ABIERTO
+        // Prevenir "rubber-banding" táctil en el fondo oscuro
         const preventTouchScroll = (e) => {
-            if (e.target === modalEditor || e.target === modalPreview) {
-                e.preventDefault();
-            }
+            if (e.target === modalEditor || e.target === modalPreview || e.target === modalSync) e.preventDefault();
         };
         modalEditor.addEventListener('touchmove', preventTouchScroll, { passive: false });
         modalPreview.addEventListener('touchmove', preventTouchScroll, { passive: false });
+        modalSync.addEventListener('touchmove', preventTouchScroll, { passive: false });
 
         const validateTextarea = () => { elBtnSaveNote.disabled = elTextarea.value.trim().length === 0; };
 
@@ -504,12 +570,16 @@
         document.getElementById('btn-today').addEventListener('click', () => { currentDate = new Date(); selectedDate = new Date(); updateUI(); });
         document.getElementById('btn-add-event').addEventListener('click', () => openEditor());
         
+        document.getElementById('btn-sync').addEventListener('click', openSync);
+        document.getElementById('btn-google-login').addEventListener('click', handleGoogleLogin);
+        document.getElementById('btn-close-sync').addEventListener('click', closeSync);
+        modalSync.addEventListener('click', (e) => { if(e.target === modalSync) closeSync(); });
+
         document.getElementById('btn-close-editor').addEventListener('click', closeEditor);
         elBtnSaveNote.addEventListener('click', saveNoteAction);
         elBtnPasteText.addEventListener('click', handlePasteClick);
         elTextarea.addEventListener('input', validateTextarea);
 
-        // Cerrar modales tocando el fondo borroso
         modalEditor.addEventListener('click', (e) => { if(e.target === modalEditor) closeEditor(); });
         modalPreview.addEventListener('click', (e) => { if(e.target === modalPreview) closePreview(); });
         
