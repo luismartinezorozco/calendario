@@ -100,7 +100,8 @@
                         </button>
                     </div>
                     
-                    <textarea id="note-textarea" placeholder="Pega el texto de WhatsApp aquí..." class="w-full flex-1 p-5 bg-white border border-gray-200 rounded-2xl shadow-sm resize-none focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 text-lg text-gray-800 placeholder-gray-400 leading-relaxed"></textarea>
+                    <!-- maxlength de 5000 para prevenir desbordamiento malicioso de memoria/cuota de Base de datos -->
+                    <textarea id="note-textarea" maxlength="5000" placeholder="Pega el texto de WhatsApp aquí..." class="w-full flex-1 p-5 bg-white border border-gray-200 rounded-2xl shadow-sm resize-none focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 text-lg text-gray-800 placeholder-gray-400 leading-relaxed"></textarea>
                 </div>
             </div>
         </div>
@@ -110,6 +111,7 @@
             <div id="preview-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition">
                 <div class="p-6 max-h-[60vh] overflow-y-auto no-scrollbar relative">
                     <div class="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-white to-transparent pointer-events-none"></div>
+                    <!-- renderizado seguro usando textContent protegido por JS puro -->
                     <p id="preview-text" class="text-gray-800 text-[15px] sm:text-base whitespace-pre-wrap font-medium leading-relaxed pt-2"></p>
                     <div class="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
                 </div>
@@ -156,11 +158,10 @@
     <!-- SCRIPT DE LA APLICACIÓN -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        // Importamos los proveedores de Google para hacer el "Account Linking"
         import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, linkWithPopup, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- CONFIGURACIÓN DE FIREBASE ACTUALIZADA ---
+        // --- CONFIGURACIÓN DE FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyDOX-xR-Bv-tWDmIQmuYYfYo0DSqiNBTVM",
             authDomain: "calendarioeqb.firebaseapp.com",
@@ -170,13 +171,18 @@
             appId: "1:724326817821:web:c946c98ae27c6c368fa6f4"
         };
             
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        let app, auth, db;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        } catch (error) {
+            console.error("No se pudo conectar a Firebase:", error);
+        }
+
         const googleProvider = new GoogleAuthProvider();
         googleProvider.setCustomParameters({ prompt: 'select_account' });
         
-        // Identificador estandarizado de aplicación para prevenir permission-denied
         const targetAppId = typeof __app_id !== 'undefined' ? __app_id : 'mi-app-calendario-seguro';
 
         // --- UTILIDADES ---
@@ -239,25 +245,21 @@
             lucide.createIcons();
         };
 
-        // --- ACTUALIZAR INTERFAZ DE AUTENTICACIÓN (NUBE) ---
         const updateAuthUI = () => {
             const btnSync = document.getElementById('btn-sync');
-            
-            // Reemplazamos todo el HTML interno para evitar errores con SVG elements y className
             if (user && !user.isAnonymous) {
-                // Respaldado con Google
                 btnSync.innerHTML = `
                     <i data-lucide="cloud-check" class="w-5 h-5 text-green-600"></i>
                     <span id="sync-badge" class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
                 `;
             } else {
-                // Anónimo (solo en dispositivo)
                 btnSync.innerHTML = `
                     <i data-lucide="cloud-off" class="w-5 h-5 text-gray-500"></i>
                     <span id="sync-badge" class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
                 `;
             }
-            lucide.createIcons();
+            // Asegurarse de volver a procesar los iconos para no perder la visualización
+            if(window.lucide) window.lucide.createIcons();
         };
 
         const renderCalendar = () => {
@@ -358,6 +360,8 @@
                 textContainer.className = "flex-1 min-w-0 pt-0.5 pointer-events-none";
                 const pText = document.createElement('p');
                 pText.className = "text-gray-800 text-[14px] sm:text-[15px] whitespace-pre-wrap font-medium leading-snug line-clamp-3";
+                
+                // ASIGNACIÓN SEGURA: previene la inyección de código (XSS)
                 pText.textContent = note.content; 
                 
                 const timeStr = new Date(note.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -374,27 +378,32 @@
             });
         };
 
-        // --- LÓGICA DE AUTENTICACIÓN (OPCIÓN 1: ANÓNIMO A GOOGLE) ---
+        // --- LÓGICA DE AUTENTICACIÓN Y PROTECCIÓN DE DATOS ---
         const initDataFlow = async () => {
             initWeekdays();
             updateUI();
 
+            // Evitar crash si falla la inicialización de Firebase local
+            if (!auth || !db) return;
+
             try {
-                // 1. Asegurar la autenticación ANTES de establecer escuchas en la BD (Evita el "permission-denied")
                 await auth.authStateReady();
                 if (!auth.currentUser) {
                     await signInAnonymously(auth);
                 }
                 
-                // 2. Ahora sí, con la sesión confirmada, escuchamos cambios
                 onAuthStateChanged(auth, (currentUser) => {
                     user = currentUser;
-                    if (!user) return;
                     
-                    // Escuchar las notas en tiempo real
+                    if (!user) {
+                        notes = [];
+                        updateUI();
+                        if(unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+                        return;
+                    }
+                    
                     if(unsubscribeSnapshot) unsubscribeSnapshot();
                     
-                    const targetAppId = typeof __app_id !== 'undefined' ? __app_id : 'mi-app-calendario-seguro';
                     const notesRef = collection(db, 'artifacts', targetAppId, 'users', user.uid, 'notes');
                     
                     unsubscribeSnapshot = onSnapshot(notesRef, (snapshot) => {
@@ -412,18 +421,15 @@
         const handleGoogleLogin = async () => {
             try {
                 if (user && user.isAnonymous) {
-                    // Si el usuario es anónimo, VINCULAMOS la cuenta. Sus notas se migrarán a su Gmail.
                     await linkWithPopup(user, googleProvider);
                     alert("¡Éxito! Tus notas ahora están respaldadas en tu cuenta de Google.");
                 } else {
-                    // Si no tiene cuenta o ya tenía una antes en otro cel, iniciamos sesión normal
                     await signInWithPopup(auth, googleProvider);
                 }
                 closeSync();
                 updateUI();
             } catch (error) {
                 if (error.code === 'auth/credential-already-in-use') {
-                    // Significa que ese Gmail ya tenía un calendario guardado. Entramos a ese en vez del anónimo.
                     try {
                         await signInWithPopup(auth, googleProvider);
                         alert("Has iniciado sesión. Se han cargado las notas que tenías en la nube.");
@@ -431,7 +437,6 @@
                     } catch (e) { console.error(e); }
                 } else {
                     console.error("Error conectando con Google:", error);
-                    // Muestra el mensaje exacto del error para poder diagnosticarlo mejor
                     alert("Hubo un error al conectar con Google: " + error.message);
                 }
             }
@@ -439,15 +444,15 @@
 
         const openSync = () => {
             if (user && !user.isAnonymous) {
-                // Ya está logueado, le ofrecemos cerrar sesión
                 if(window.confirm("Ya tienes tu calendario respaldado. ¿Deseas cerrar sesión en este dispositivo?")) {
-                    signOut(auth);
-                    window.location.reload(); // Recargar para crear una nueva sesión en blanco
+                    signOut(auth).then(() => {
+                        notes = [];
+                        window.location.reload(); 
+                    });
                 }
                 return;
             }
             
-            // Mostrar modal para invitar a iniciar sesión
             elScrollArea.classList.replace('overflow-y-auto', 'overflow-hidden');
             modalSync.classList.remove('pointer-events-none', 'opacity-0');
             setTimeout(() => cardSync.classList.replace('scale-95', 'scale-100'), 10);
@@ -461,9 +466,14 @@
             }, 200);
         };
 
-        // --- ACCIONES DE NOTA ---
+        // --- ACCIONES DE NOTA (PROTEGIDAS) ---
         const saveNoteAction = async () => {
-            const content = elTextarea.value.trim();
+            if (!user || !user.uid) {
+                alert("Error de seguridad: Sesión no autorizada.");
+                return;
+            }
+
+            const content = elTextarea.value.trim().substring(0, 5000); 
             const dateKey = formatDateKey(selectedDate);
             if (!content) return;
 
@@ -483,16 +493,26 @@
                 closeEditor();
             } catch (error) { 
                 console.error("Error al guardar:", error); 
-                alert("No se pudo guardar. Verifica tu conexión y los permisos.");
+                alert("No se pudo guardar. Verifica tu conexión y los permisos de seguridad.");
             } 
             finally { elBtnSaveNote.disabled = false; }
         };
 
         const deleteNoteAction = async (noteId) => {
+            if (!user || !user.uid) {
+                alert("Error de seguridad: Sesión no autorizada.");
+                return;
+            }
+
             if(window.confirm("¿Eliminar este evento permanentemente?")) {
                 try {
                     await deleteDoc(doc(db, 'artifacts', targetAppId, 'users', user.uid, 'notes', noteId));
-                } catch (error) { console.error(error); }
+                    // BUG FIX: Si se borra mientras el editor está abierto, lo cierra por seguridad
+                    if (editingNoteId === noteId) closeEditor();
+                } catch (error) { 
+                    console.error("Error al borrar:", error); 
+                    alert("No se pudo eliminar. Verifica tu conexión.");
+                }
             }
         };
 
@@ -502,12 +522,18 @@
                 if (text) {
                     if (elTextarea.value) { elTextarea.value += '\n' + text; } 
                     else { elTextarea.value = text; }
+                    
+                    // BUG FIX: Respetar límite de caracteres incluso al inyectar por JavaScript
+                    if (elTextarea.value.length > 5000) {
+                        elTextarea.value = elTextarea.value.substring(0, 5000);
+                        alert("El texto se ha recortado a 5000 caracteres para evitar errores.");
+                    }
+                    
                     validateTextarea();
-                    // Evitar autoFocus en móviles para no activar el teclado accidentalmente
                     if(window.innerWidth > 640) elTextarea.focus();
                 }
             } catch (err) {
-                alert('Tu navegador ha bloqueado el acceso al portapapeles. Por favor, mantén presionado el cuadro de texto y selecciona "Pegar".');
+                alert('Tu navegador ha bloqueado el acceso al portapapeles por seguridad. Por favor, mantén presionado el cuadro de texto y selecciona "Pegar".');
             }
         };
 
@@ -557,7 +583,6 @@
             }, 200);
         };
 
-        // Prevenir "rubber-banding" táctil en el fondo oscuro
         const preventTouchScroll = (e) => {
             if (e.target === modalEditor || e.target === modalPreview || e.target === modalSync) e.preventDefault();
         };
@@ -567,9 +592,19 @@
 
         const validateTextarea = () => { elBtnSaveNote.disabled = elTextarea.value.trim().length === 0; };
 
-        // --- LISTENERS ---
-        document.getElementById('btn-prev-month').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); updateUI(); });
-        document.getElementById('btn-next-month').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); updateUI(); });
+        // --- LISTENERS (FIX BUG Día 31: Agregando .setDate(1) antes de cambiar mes) ---
+        document.getElementById('btn-prev-month').addEventListener('click', () => { 
+            currentDate.setDate(1); 
+            currentDate.setMonth(currentDate.getMonth() - 1); 
+            updateUI(); 
+        });
+        
+        document.getElementById('btn-next-month').addEventListener('click', () => { 
+            currentDate.setDate(1); 
+            currentDate.setMonth(currentDate.getMonth() + 1); 
+            updateUI(); 
+        });
+        
         document.getElementById('btn-today').addEventListener('click', () => { currentDate = new Date(); selectedDate = new Date(); updateUI(); });
         document.getElementById('btn-add-event').addEventListener('click', () => openEditor());
         
