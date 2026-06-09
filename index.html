@@ -76,8 +76,10 @@
         </button>
 
         <!-- MODAL: EDITOR DE NOTAS (Ventana Flotante Estilo iOS) -->
-        <div id="editor-modal" class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
-            <div id="editor-card" class="bg-white w-full max-w-sm h-[450px] max-h-[85vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition">
+        <!-- NOTA: Alineado arriba en móviles (items-start pt-10) para evitar que el teclado lo tape -->
+        <div id="editor-modal" class="fixed inset-0 z-50 bg-black/50 flex items-start sm:items-center justify-center p-4 pt-10 sm:p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
+            <!-- Reducimos la altura en móviles a h-[380px] para asegurar que quepa con el teclado abierto -->
+            <div id="editor-card" class="bg-white w-full max-w-sm h-[380px] sm:h-[450px] max-h-[85vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition">
                 
                 <!-- Cabecera del Editor -->
                 <div class="flex items-center justify-between px-6 pb-4 pt-5 border-b border-gray-100 bg-white">
@@ -509,6 +511,13 @@
         // Cerrar modales tocando el fondo borroso
         modalEditor.addEventListener('click', (e) => { if(e.target === modalEditor) closeEditor(); });
         modalPreview.addEventListener('click', (e) => { if(e.target === modalPreview) closePreview(); });
+        
+        // Ajuste para móviles: asegurar que el campo de texto sea visible cuando el teclado se abra
+        elTextarea.addEventListener('focus', () => {
+            setTimeout(() => {
+                elTextarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        });
         
         document.getElementById('btn-close-preview').addEventListener('click', closePreview);
         document.getElementById('btn-preview-delete').addEventListener('click', () => { const id = previewNoteObj.id; closePreview(); setTimeout(()=>deleteNoteAction(id), 250); });
