@@ -4,6 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Calendario Eventos</title>
+    
+    <!-- Meta tags PWA (iOS & Android) -->
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Calendario">
+    
+    <!-- Ícono para iOS (Base64 dinámico SVG - Cuadro rojo con 'C') -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2RjMjYyNiIvPjx0ZXh0IHk9IjcxIiB4PSIyNiIgZm9udC1zaXplPSI2NSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSIjZmZmZmZmIj5DPC90ZXh0Pjwvc3ZnPg==">
+    
+    <!-- Manifest dinámico para Android/Chrome -->
+    <link id="manifest-link" rel="manifest" href="">
+    <script>
+        const manifestJSON = {
+            "name": "Calendario de Eventos",
+            "short_name": "Calendario",
+            "start_url": window.location.pathname,
+            "display": "standalone",
+            "background_color": "#f4f5f7",
+            "theme_color": "#ffffff",
+            "icons": [{
+                "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2RjMjYyNiIvPjx0ZXh0IHk9IjcxIiB4PSIyNiIgZm9udC1zaXplPSI2NSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSIjZmZmZmZmIj5DPC90ZXh0Pjwvc3ZnPg==",
+                "sizes": "192x192",
+                "type": "image/svg+xml",
+                "purpose": "any maskable"
+            }]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestJSON)], { type: 'application/manifest+json' });
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
+        });
+    </script>
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -26,12 +59,17 @@
         <!-- HEADER BLANCO CURVO -->
         <div class="bg-white rounded-b-[2rem] shadow-[0_4px_20px_rgba(0,0,0,0.03)] z-20 relative pb-2">
             
-            <!-- Barra Superior (Mes, Hoy, Flechas, Sync) -->
+            <!-- Barra Superior (Mes, Hoy, Flechas, Sync, Instalar) -->
             <div class="flex items-center justify-between pt-6 pb-2 px-5">
                 <div class="flex items-center gap-2">
                     <h2 id="month-title" class="text-2xl font-black text-gray-800 capitalize tracking-tight">Mes, Año</h2>
                 </div>
                 <div class="flex items-center gap-1">
+                    <!-- Botón Instalar App (PWA) -->
+                    <button id="btn-install" class="p-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-full smooth-transition active:scale-95" title="Instalar como App">
+                        <i data-lucide="download" class="w-5 h-5"></i>
+                    </button>
+
                     <!-- Botón de Respaldo Nube -->
                     <button id="btn-sync" class="mr-2 p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-full smooth-transition active:scale-95 relative" title="Respaldar en la nube">
                         <i id="sync-icon" data-lucide="cloud-off" class="w-5 h-5 text-gray-500"></i>
@@ -153,6 +191,38 @@
             </div>
         </div>
 
+        <!-- MODAL: INSTALAR APP (PWA) -->
+        <div id="install-modal" class="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
+            <div id="install-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition p-6 text-center relative">
+                <button id="btn-close-install" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+                
+                <div class="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-500">
+                    <i data-lucide="download" class="w-8 h-8"></i>
+                </div>
+                
+                <h3 class="text-xl font-black text-gray-900 mb-2">Instalar como App</h3>
+                <p class="text-sm text-gray-600 mb-6 leading-relaxed">
+                    Para tener esta aplicación siempre a la mano en tu pantalla de inicio, sigue estos pasos según tu dispositivo:
+                </p>
+
+                <div class="text-left bg-gray-50 p-4 rounded-xl mb-4 border border-gray-100">
+                    <h4 class="font-bold text-gray-800 mb-1 flex items-center gap-2">
+                        <i data-lucide="apple" class="w-4 h-4 text-gray-600"></i> iPhone (Safari)
+                    </h4>
+                    <p class="text-xs text-gray-600">Toca el ícono de <b>Compartir</b> <span class="inline-block border border-gray-300 bg-white rounded px-1.5 shadow-sm">↑</span> en la barra inferior y selecciona <b>"Agregar a inicio"</b> <span class="inline-block border border-gray-300 bg-white rounded px-1.5 shadow-sm">+</span>.</p>
+                </div>
+
+                <div class="text-left bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <h4 class="font-bold text-gray-800 mb-1 flex items-center gap-2">
+                        <i data-lucide="smartphone" class="w-4 h-4 text-gray-600"></i> Android (Chrome)
+                    </h4>
+                    <p class="text-xs text-gray-600">Toca el menú de <b>3 puntos</b> <span class="inline-block border border-gray-300 bg-white rounded px-1.5 shadow-sm">⋮</span> en la esquina superior y selecciona <b>"Agregar a la pantalla principal"</b> o <b>"Instalar aplicación"</b>.</p>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- SCRIPT DE LA APLICACIÓN -->
@@ -226,6 +296,10 @@
         const cardPreview = document.getElementById('preview-card');
         const modalSync = document.getElementById('sync-modal');
         const cardSync = document.getElementById('sync-card');
+        
+        // Elementos PWA Install Modal
+        const modalInstall = document.getElementById('install-modal');
+        const cardInstall = document.getElementById('install-card');
 
         // --- RENDERIZADO DEL CALENDARIO ---
         const initWeekdays = () => {
@@ -375,6 +449,48 @@
                 elNotesList.appendChild(noteDiv);
             });
         };
+
+        // --- LÓGICA PWA E INSTALACIÓN NATIVA ---
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Evitar que aparezca el mini-infobar automático de Chrome
+            e.preventDefault();
+            deferredPrompt = e;
+            // Indicador opcional: Animación sutil de pulso al botón de instalar para avisar que está disponible nativamente
+            document.getElementById('btn-install').classList.add('animate-pulse');
+        });
+
+        const openInstallModal = () => {
+            elScrollArea.classList.replace('overflow-y-auto', 'overflow-hidden');
+            modalInstall.classList.remove('pointer-events-none', 'opacity-0');
+            setTimeout(() => cardInstall.classList.replace('scale-95', 'scale-100'), 10);
+        };
+
+        const closeInstallModal = () => {
+            cardInstall.classList.replace('scale-100', 'scale-95');
+            setTimeout(() => {
+                modalInstall.classList.add('opacity-0', 'pointer-events-none');
+                elScrollArea.classList.replace('overflow-hidden', 'overflow-y-auto');
+            }, 200);
+        };
+
+        document.getElementById('btn-install').addEventListener('click', async () => {
+            // Si el dispositivo acepta el Prompt Nativo (ej: Android/Chrome) se lanza la ventana mágica
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    deferredPrompt = null;
+                    document.getElementById('btn-install').classList.remove('animate-pulse');
+                }
+            } else {
+                // Si es un navegador restrictivo (iPhone/Safari o WebView), abrimos la guía visual en Modal
+                openInstallModal();
+            }
+        });
+
+        document.getElementById('btn-close-install').addEventListener('click', closeInstallModal);
+        modalInstall.addEventListener('click', (e) => { if(e.target === modalInstall) closeInstallModal(); });
 
         // --- LÓGICA DE DATOS Y FLUJO UNIVERSAL SEGURO ---
         const initDataFlow = async () => {
@@ -615,11 +731,12 @@
         };
 
         const preventTouchScroll = (e) => {
-            if (e.target === modalEditor || e.target === modalPreview || e.target === modalSync) e.preventDefault();
+            if (e.target === modalEditor || e.target === modalPreview || e.target === modalSync || e.target === modalInstall) e.preventDefault();
         };
         modalEditor.addEventListener('touchmove', preventTouchScroll, { passive: false });
         modalPreview.addEventListener('touchmove', preventTouchScroll, { passive: false });
         modalSync.addEventListener('touchmove', preventTouchScroll, { passive: false });
+        modalInstall.addEventListener('touchmove', preventTouchScroll, { passive: false });
 
         const validateTextarea = () => { elBtnSaveNote.disabled = elTextarea.value.trim().length === 0; };
 
