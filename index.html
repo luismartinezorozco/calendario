@@ -64,9 +64,15 @@
             
             <!-- Barra Superior (Mes, Hoy, Flechas, Sync, Instalar) -->
             <div class="flex items-center justify-between pt-6 pb-2 px-5">
-                <div class="flex items-center gap-2">
-                    <h2 id="month-title" class="text-2xl font-black text-gray-800 capitalize tracking-tight">Mes, Año</h2>
+                
+                <!-- TÍTULO INTERACTIVO CON SELECTOR DE FECHA NATIVO -->
+                <div class="flex items-center gap-1 relative cursor-pointer group">
+                    <h2 id="month-title" class="text-2xl font-black text-gray-800 capitalize tracking-tight group-hover:text-red-600 smooth-transition">Mes, Año</h2>
+                    <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 group-hover:text-red-600 smooth-transition"></i>
+                    <!-- Input nativo invisible encima del título -->
+                    <input type="month" id="month-picker" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="Seleccionar mes">
                 </div>
+                
                 <div class="flex items-center gap-1">
                     <!-- Botón Instalar App (PWA) - Oculto por defecto -->
                     <button id="btn-install" class="hidden p-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-full smooth-transition active:scale-95" title="Instalar como App">
@@ -332,6 +338,7 @@
 
         // --- ELEMENTOS ---
         const elMonthTitle = document.getElementById('month-title');
+        const elMonthPicker = document.getElementById('month-picker');
         const elCalendarGrid = document.getElementById('calendar-grid');
         const elDateBanner = document.getElementById('date-banner');
         const elNotesCount = document.getElementById('notes-count');
@@ -386,10 +393,17 @@
 
         const renderCalendar = () => {
             elCalendarGrid.innerHTML = ''; 
-            elMonthTitle.textContent = `${MONTH_NAMES[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
-
+            
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
+            
+            // Actualizar Título
+            elMonthTitle.textContent = `${MONTH_NAMES[month]} ${year}`;
+            // Mantener sincronizado el valor del input nativo oculto
+            if (elMonthPicker) {
+                elMonthPicker.value = `${year}-${String(month + 1).padStart(2, '0')}`;
+            }
+
             const daysInMonth = getDaysInMonth(year, month);
             const firstDayIndex = getFirstDayOfMonth(year, month);
 
@@ -846,6 +860,18 @@
             currentDate.setMonth(currentDate.getMonth() + 1); 
             updateUI(); 
         });
+        
+        // --- NUEVO: Listener para el salto directo de fecha (Selector nativo) ---
+        if (elMonthPicker) {
+            elMonthPicker.addEventListener('change', (e) => {
+                if (!e.target.value) return;
+                const [yearStr, monthStr] = e.target.value.split('-');
+                currentDate.setFullYear(parseInt(yearStr, 10));
+                currentDate.setMonth(parseInt(monthStr, 10) - 1);
+                currentDate.setDate(1); // Evitar salto de mes si hoy es 31 y el nuevo mes tiene 30
+                updateUI();
+            });
+        }
         
         document.getElementById('btn-today').addEventListener('click', () => { currentDate = new Date(); selectedDate = new Date(); updateUI(); });
         document.getElementById('btn-add-event').addEventListener('click', () => openEditor());
