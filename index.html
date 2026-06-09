@@ -154,13 +154,20 @@
                     <div class="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
                 </div>
                 
-                <div class="bg-gray-50 p-4 grid grid-cols-2 gap-3 border-t border-gray-100">
-                    <button id="btn-preview-delete" class="py-3.5 text-red-600 font-bold bg-white border border-gray-200 rounded-xl smooth-transition active:bg-red-50 active:scale-95 flex items-center justify-center gap-2">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i> Borrar
+                <div class="bg-gray-50 p-4 flex flex-col gap-3 border-t border-gray-100">
+                    <!-- NUEVO BOTÓN: Compartir Evento -->
+                    <button id="btn-preview-share" class="w-full py-3 text-blue-700 font-bold bg-blue-50 border border-blue-100 hover:bg-blue-100 rounded-xl smooth-transition active:scale-95 flex items-center justify-center gap-2">
+                        <i data-lucide="share-2" class="w-5 h-5"></i> Compartir Evento
                     </button>
-                    <button id="btn-preview-edit" class="py-3.5 text-white font-bold bg-gray-900 rounded-xl smooth-transition active:bg-gray-800 active:scale-95 flex items-center justify-center gap-2">
-                        <i data-lucide="edit-2" class="w-4 h-4"></i> Editar
-                    </button>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="btn-preview-delete" class="py-3.5 text-red-600 font-bold bg-white border border-gray-200 rounded-xl smooth-transition active:bg-red-50 active:scale-95 flex items-center justify-center gap-2">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i> Borrar
+                        </button>
+                        <button id="btn-preview-edit" class="py-3.5 text-white font-bold bg-gray-900 rounded-xl smooth-transition active:bg-gray-800 active:scale-95 flex items-center justify-center gap-2">
+                            <i data-lucide="edit-2" class="w-4 h-4"></i> Editar
+                        </button>
+                    </div>
                 </div>
                 
                 <button id="btn-close-preview" class="absolute top-4 right-4 w-8 h-8 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center smooth-transition active:bg-gray-200 active:scale-90">
@@ -226,9 +233,9 @@
     <!-- SCRIPT DE LA APLICACIÓN -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        // Eliminados métodos Redirect. Todo operará mediante Popup y Credential Extraction para máxima compatibilidad
         import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, linkWithPopup, signInWithPopup, signOut, signInWithCredential } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // Importamos enableIndexedDbPersistence para el Modo 100% Offline de Firebase
+        import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURACIÓN DE FIREBASE ---
         const firebaseConfig = {
@@ -245,6 +252,16 @@
             app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
+            
+            // HABILITAR PERSISTENCIA OFFLINE LOCAL
+            enableIndexedDbPersistence(db).catch((err) => {
+                if (err.code == 'failed-precondition') {
+                    console.warn("Múltiples pestañas abiertas. La persistencia offline solo funciona en una a la vez.");
+                } else if (err.code == 'unimplemented') {
+                    console.warn("Tu navegador no soporta el modo offline.");
+                }
+            });
+            
         } catch (error) {
             console.error("No se pudo conectar a Firebase:", error);
         }
@@ -272,6 +289,25 @@
         };
         const isSameDay = (date1, date2) => date1.getFullYear() === date2.getFullYear() && date1.getMonth() === date2.getMonth() && date1.getDate() === date2.getDate();
         const formatDateKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+        // Copiador seguro para portapapeles
+        const copyToClipboard = (text) => {
+            if (navigator.clipboard && window.isSecureContext) {
+                return navigator.clipboard.writeText(text);
+            } else {
+                let textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-999999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                return new Promise((res, rej) => {
+                    document.execCommand('copy') ? res() : rej();
+                    textArea.remove();
+                });
+            }
+        };
 
         // --- ESTADO ---
         let user = null;
@@ -456,11 +492,9 @@
         // --- LÓGICA PWA E INSTALACIÓN NATIVA INTELIGENTE ---
         let deferredPrompt;
         
-        // Solo para Android/Chrome: Escucha si el dispositivo soporta el botón nativo de instalar
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            // Mostramos el botón oculto solo si Android confirma que se puede instalar y no está ya instalada
             if (!isStandalone) {
                 const btnInstall = document.getElementById('btn-install');
                 btnInstall.classList.remove('hidden');
@@ -468,7 +502,6 @@
             }
         });
 
-        // Cuando la app ya fue instalada correctamente (Android)
         window.addEventListener('appinstalled', () => {
             document.getElementById('btn-install').classList.add('hidden');
             deferredPrompt = null;
@@ -488,7 +521,6 @@
             }, 200);
         };
 
-        // Evento manual para el botón (Solo visible en Android)
         document.getElementById('btn-install').addEventListener('click', async () => {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
@@ -505,15 +537,13 @@
         document.getElementById('btn-got-it').addEventListener('click', closeInstallModal);
         modalInstall.addEventListener('click', (e) => { if(e.target === modalInstall) closeInstallModal(); });
 
-        // AVISO AUTOMÁTICO EN iOS (Auto-Prompt sin botón)
-        // Se ejecuta solo una vez usando localStorage para no ser spam
         if (isIOS && !isStandalone) {
             const hasSeenPrompt = localStorage.getItem('iosPwaPromptShown');
             if (!hasSeenPrompt) {
                 setTimeout(() => {
                     openInstallModal();
                     localStorage.setItem('iosPwaPromptShown', 'true');
-                }, 2500); // 2.5 segundos después de entrar la primera vez
+                }, 2500); 
             }
         }
 
@@ -548,7 +578,7 @@
                         return;
                     }
                     
-                    // CONEXIÓN A FIRESTORE
+                    // CONEXIÓN A FIRESTORE CON SOPORTE OFFLINE
                     if (unsubscribeSnapshot) unsubscribeSnapshot();
                     
                     const notesRef = collection(db, 'artifacts', targetAppId, 'users', user.uid, 'notes');
@@ -572,8 +602,6 @@
             }
 
             try {
-                // El método Popup es el único verdaderamente estable si se manejan bien sus excepciones.
-                // Firebase se encarga del intercambio seguro en la ventana paralela sin perder cookies.
                 if (user && user.isAnonymous) {
                     await linkWithPopup(user, googleProvider);
                     alert("¡Sincronización exitosa! Tus datos están respaldados.");
@@ -585,15 +613,11 @@
             } catch (error) {
                 console.error("[ERROR LOGIN]", error);
                 
-                // RUTA DE RESCATE MULTIDISPOSITIVO (MÓVIL Y DESKTOP)
                 if (error.code === 'auth/credential-already-in-use') {
                     try {
                         console.log("[RESCATE] Cuenta ya existente. Extrayendo credencial secreta...");
                         const credential = GoogleAuthProvider.credentialFromError(error);
-                        
-                        // Iniciamos sesión directamente SIN volver a abrir la ventana de Google
                         await signInWithCredential(auth, credential);
-                        
                         alert("Has iniciado sesión correctamente. Sincronizando los datos de tus otros dispositivos...");
                         closeSync();
                     } catch (e) { 
@@ -603,10 +627,8 @@
                 } else if (error.code === 'auth/unauthorized-domain') {
                     alert(`El dominio actual (${window.location.hostname}) no está autorizado en Firebase.\nAgrega este dominio en Configuración > Dominios autorizados.`);
                 } else if (error.code === 'auth/popup-blocked') {
-                    // ESCUDO CONTRA IN-APP BROWSERS (WHATSAPP, INSTAGRAM)
                     alert("⚠️ Ventana bloqueada.\n\nSi abriste esto desde WhatsApp o Instagram, toca los 3 puntitos arriba a la derecha y elige 'Abrir en Chrome' o 'Abrir en Safari' para poder iniciar sesión con Google.");
                 } else if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
-                    // Solo mostramos error si el fallo fue real, ignoramos si el usuario cerró la ventana a propósito
                     alert(`Hubo un error con la autenticación: ${error.message}`);
                 }
             }
@@ -636,7 +658,7 @@
             }, 200);
         };
 
-        // --- ACCIONES DE NOTA ---
+        // --- ACCIONES DE NOTA Y COMPARTIR ---
         const saveNoteAction = async () => {
             const content = elTextarea.value.trim().substring(0, 5000); 
             const dateKey = formatDateKey(selectedDate);
@@ -705,6 +727,40 @@
                 }
             } catch (err) {
                 alert('Tu navegador ha bloqueado el acceso al portapapeles por seguridad. Por favor, mantén presionado el cuadro de texto y selecciona "Pegar".');
+            }
+        };
+
+        // NUEVA FUNCIÓN: Compartir Evento
+        const handleShareEvent = async () => {
+            if (!previewNoteObj) return;
+            
+            // Construir un título formateado con la fecha real del evento
+            const [y, m, d] = previewNoteObj.dateKey.split('-');
+            const eventDate = new Date(y, m - 1, d);
+            const dateStr = `${DAY_NAMES[eventDate.getDay()]}, ${eventDate.getDate()} de ${MONTH_NAMES[eventDate.getMonth()]}`;
+            
+            const textToShare = `📅 *Evento el ${dateStr}*\n\n${previewNoteObj.content}`;
+
+            if (navigator.share) {
+                // Teléfonos móviles y navegadores compatibles
+                try {
+                    await navigator.share({
+                        title: 'Evento del Calendario',
+                        text: textToShare
+                    });
+                } catch (err) {
+                    if (err.name !== "AbortError") {
+                        console.error("Error compartiendo:", err);
+                    }
+                }
+            } else {
+                // Computadoras (Fallback a Portapapeles)
+                try {
+                    await copyToClipboard(textToShare);
+                    alert("¡Evento copiado al portapapeles! Ya puedes pegarlo en un mensaje.");
+                } catch (e) {
+                    alert("Tu navegador no soporta compartir automáticamente.");
+                }
             }
         };
 
@@ -796,6 +852,9 @@
         document.getElementById('btn-close-preview').addEventListener('click', closePreview);
         document.getElementById('btn-preview-delete').addEventListener('click', () => { const id = previewNoteObj.id; closePreview(); setTimeout(()=>deleteNoteAction(id), 250); });
         document.getElementById('btn-preview-edit').addEventListener('click', () => { const n = previewNoteObj; closePreview(); setTimeout(()=>openEditor(n), 250); });
+        
+        // Listener del nuevo botón Compartir
+        document.getElementById('btn-preview-share').addEventListener('click', handleShareEvent);
 
         // INICIALIZACIÓN FINAL
         initDataFlow();
