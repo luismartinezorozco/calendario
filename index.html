@@ -158,8 +158,8 @@
     <!-- SCRIPT DE LA APLICACIÓN -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        // Importamos signInWithCredential para la técnica avanzada Multidispositivo
-        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, linkWithPopup, signInWithPopup, linkWithRedirect, signInWithRedirect, getRedirectResult, signOut, signInWithCredential } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // Eliminados métodos Redirect. Todo operará mediante Popup y Credential Extraction para máxima compatibilidad
+        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, linkWithPopup, signInWithPopup, signOut, signInWithCredential } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURACIÓN DE FIREBASE ---
@@ -185,10 +185,7 @@
         googleProvider.setCustomParameters({ prompt: 'select_account' });
         
         const targetAppId = 'mi-app-calendario-seguro';
-        
-        // --- DETECCIÓN DE ENTORNO LOCAL ---
         const isLocalFile = window.location.protocol === 'file:';
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
         // --- UTILIDADES ---
         const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -223,7 +220,6 @@
         const elBtnPasteText = document.getElementById('btn-paste-text');
         const elScrollArea = document.getElementById('main-scroll-area');
 
-        // Modales
         const modalEditor = document.getElementById('editor-modal');
         const cardEditor = document.getElementById('editor-card');
         const modalPreview = document.getElementById('preview-modal');
@@ -380,7 +376,7 @@
             });
         };
 
-        // --- LÓGICA DEFENSIVA MULTIDISPOSITIVO (NÚCLEO MEJORADO) ---
+        // --- LÓGICA DE DATOS Y FLUJO UNIVERSAL SEGURO ---
         const initDataFlow = async () => {
             initWeekdays();
             updateUI();
@@ -395,30 +391,6 @@
             try {
                 await auth.authStateReady();
 
-                // FASE 1: Resolución para Celulares (Redirect)
-                try {
-                    const redirectResult = await getRedirectResult(auth);
-                    if (redirectResult) {
-                        console.log("[INIT] Autenticación de Google exitosa vía Redirect.");
-                    }
-                } catch (error) {
-                    console.error("[ERROR REDIRECT]", error);
-                    // RUTA DE RESCATE MÓVIL: Atrapa la credencial existente y hace inicio de sesión directo
-                    if (error.code === 'auth/credential-already-in-use') {
-                        console.log("[RESCATE MÓVIL] Cuenta de Google ya vinculada a otro dispositivo. Migrando sesión...");
-                        try {
-                            const credential = GoogleAuthProvider.credentialFromError(error);
-                            await signInWithCredential(auth, credential);
-                            console.log("[RESCATE MÓVIL] Sesión iniciada con éxito. Sincronizando datos...");
-                        } catch (err) {
-                            console.error("[ERROR EN RESCATE MÓVIL]", err);
-                        }
-                    } else if (error.code === 'auth/unauthorized-domain') {
-                        alert(`Para probar el inicio de sesión aquí, autoriza este dominio en Firebase:\n\n${window.location.hostname}`);
-                    }
-                }
-
-                // FASE 2: Escuchar Sesión
                 onAuthStateChanged(auth, async (currentUser) => {
                     user = currentUser;
                     
@@ -435,7 +407,7 @@
                         return;
                     }
                     
-                    // FASE 3: Conexión Estable y Segura a la Base de Datos
+                    // CONEXIÓN A FIRESTORE
                     if (unsubscribeSnapshot) unsubscribeSnapshot();
                     
                     const notesRef = collection(db, 'artifacts', targetAppId, 'users', user.uid, 'notes');
@@ -459,39 +431,42 @@
             }
 
             try {
+                // El método Popup es el único verdaderamente estable si se manejan bien sus excepciones.
+                // Firebase se encarga del intercambio seguro en la ventana paralela sin perder cookies.
                 if (user && user.isAnonymous) {
-                    if (isMobile) {
-                        await linkWithRedirect(user, googleProvider);
-                    } else {
-                        await linkWithPopup(user, googleProvider);
-                        alert("¡Sincronización exitosa! Tus datos están respaldados.");
-                        closeSync();
-                    }
+                    await linkWithPopup(user, googleProvider);
+                    alert("¡Sincronización exitosa! Tus datos están respaldados.");
+                    closeSync();
                 } else {
-                    if (isMobile) {
-                        await signInWithRedirect(auth, googleProvider);
-                    } else {
-                        await signInWithPopup(auth, googleProvider);
-                        closeSync();
-                    }
+                    await signInWithPopup(auth, googleProvider);
+                    closeSync();
                 }
             } catch (error) {
                 console.error("[ERROR LOGIN]", error);
                 
-                // RUTA DE RESCATE ESCRITORIO: Evita el bloqueo si la cuenta ya se usó en el celular
+                // RUTA DE RESCATE MULTIDISPOSITIVO (MÓVIL Y DESKTOP)
+                // Esto atrapa cuando intentas vincular una cuenta que ya usaste en otro teléfono
                 if (error.code === 'auth/credential-already-in-use') {
                     try {
-                        console.log("[RESCATE DESKTOP] Cuenta ya existente. Forzando inicio de sesión...");
+                        console.log("[RESCATE] Cuenta ya existente. Extrayendo credencial secreta...");
                         const credential = GoogleAuthProvider.credentialFromError(error);
+                        
+                        // Iniciamos sesión directamente SIN volver a abrir la ventana de Google
                         await signInWithCredential(auth, credential);
-                        alert("Has iniciado sesión correctamente. Sincronizando datos de tus otros dispositivos...");
+                        
+                        alert("Has iniciado sesión correctamente. Sincronizando los datos de tus otros dispositivos...");
                         closeSync();
                     } catch (e) { 
-                        console.error("[ERROR RESCATE DESKTOP]", e); 
+                        console.error("[ERROR RESCATE]", e); 
+                        alert("Hubo un error al recuperar la cuenta. Intenta de nuevo.");
                     }
                 } else if (error.code === 'auth/unauthorized-domain') {
                     alert(`El dominio actual (${window.location.hostname}) no está autorizado en Firebase.\nAgrega este dominio en Configuración > Dominios autorizados.`);
-                } else if (error.code !== 'auth/popup-closed-by-user') {
+                } else if (error.code === 'auth/popup-blocked') {
+                    // ESCUDO CONTRA IN-APP BROWSERS (WHATSAPP, INSTAGRAM)
+                    alert("⚠️ Ventana bloqueada.\n\nSi abriste esto desde WhatsApp o Instagram, toca los 3 puntitos arriba a la derecha y elige 'Abrir en Chrome' o 'Abrir en Safari' para poder iniciar sesión con Google.");
+                } else if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
+                    // Solo mostramos error si el fallo fue real, ignoramos si el usuario cerró la ventana a propósito
                     alert(`Hubo un error con la autenticación: ${error.message}`);
                 }
             }
