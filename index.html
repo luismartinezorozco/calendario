@@ -183,7 +183,8 @@
         const googleProvider = new GoogleAuthProvider();
         googleProvider.setCustomParameters({ prompt: 'select_account' });
         
-        const targetAppId = typeof __app_id !== 'undefined' ? __app_id : 'mi-app-calendario-seguro';
+        // ID FIJO: Garantiza que Vercel y el entorno local siempre escriban y lean en el mismo lugar
+        const targetAppId = 'mi-app-calendario-seguro';
 
         // --- UTILIDADES ---
         const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -242,7 +243,7 @@
             renderBanner();
             renderNotes();
             updateAuthUI();
-            lucide.createIcons();
+            if (window.lucide) lucide.createIcons();
         };
 
         const updateAuthUI = () => {
@@ -258,8 +259,6 @@
                     <span id="sync-badge" class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
                 `;
             }
-            // Asegurarse de volver a procesar los iconos para no perder la visualización
-            if(window.lucide) window.lucide.createIcons();
         };
 
         const renderCalendar = () => {
@@ -383,46 +382,49 @@
             initWeekdays();
             updateUI();
 
-            // Evitar crash si falla la inicialización de Firebase local
-            if (!auth || !db) return;
+            if (!auth || !db) {
+                console.error("Firebase no pudo inicializarse correctamente.");
+                return;
+            }
 
             try {
-                await auth.authStateReady();
-
-                // 1. REVISAR SI VENIMOS DE UNA REDIRECCIÓN DE GOOGLE (Solución Bug Móvil)
+                // 1. REVISAR SI VENIMOS DE UNA REDIRECCIÓN DE GOOGLE PRIMERO
                 try {
                     const redirectResult = await getRedirectResult(auth);
                     if (redirectResult) {
-                        // Sincronización exitosa, la página carga ya con el usuario vinculado de Google
                         console.log("Sincronización exitosa con Google.");
                     }
                 } catch (error) {
                     if (error.code === 'auth/credential-already-in-use') {
-                        // El correo de Google ya tenía datos guardados previamente. 
-                        // Iniciamos sesión normal con esa cuenta en lugar de vincular la nueva.
+                        // El correo ya tenía datos. Forzamos inicio de sesión normal.
                         await signInWithRedirect(auth, googleProvider);
-                        return; // Detenemos la ejecución porque la página va a recargar
+                        return; // Se detiene aquí porque la página recargará
                     } else {
                         console.error("Error al volver de Google:", error);
-                        alert("Hubo un error al conectar con Google: " + error.message);
                     }
                 }
 
-                if (!auth.currentUser) {
-                    await signInAnonymously(auth);
-                }
-                
-                onAuthStateChanged(auth, (currentUser) => {
+                // 2. ESCUCHAR EL ESTADO DE LA SESIÓN DE FORMA SEGURA
+                onAuthStateChanged(auth, async (currentUser) => {
                     user = currentUser;
                     
                     if (!user) {
+                        // No hay usuario activo. Limpiamos datos y creamos sesión Anónima
                         notes = [];
                         updateUI();
-                        if(unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+                        if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+                        
+                        try {
+                            await signInAnonymously(auth);
+                        } catch (e) {
+                            console.error("Error Auth Anónima:", e);
+                            alert("Fallo de conexión: Asegúrate de habilitar el inicio de sesión 'Anónimo' en tu consola de Firebase.");
+                        }
                         return;
                     }
                     
-                    if(unsubscribeSnapshot) unsubscribeSnapshot();
+                    // 3. CONECTAR A LA BASE DE DATOS
+                    if (unsubscribeSnapshot) unsubscribeSnapshot();
                     
                     const notesRef = collection(db, 'artifacts', targetAppId, 'users', user.uid, 'notes');
                     
@@ -430,18 +432,20 @@
                         notes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                         updateUI();
                     }, (error) => {
-                        console.error("Error al obtener los datos de Firestore (verifica las reglas):", error);
+                        console.error("Error al obtener los datos de Firestore:", error);
+                        if (error.code === 'permission-denied') {
+                            alert("Acceso denegado: Por favor verifica que las Reglas de Firestore en la consola estén correctamente publicadas.");
+                        }
                     });
                 });
             } catch (error) { 
-                console.error("Error iniciando app:", error); 
+                console.error("Error iniciando el flujo de datos:", error); 
             }
         };
 
         const handleGoogleLogin = async () => {
             try {
                 if (user && user.isAnonymous) {
-                    // Usamos Redirect en lugar de Popup para garantizar la compatibilidad móvil
                     await linkWithRedirect(user, googleProvider);
                 } else {
                     await signInWithRedirect(auth, googleProvider);
@@ -517,7 +521,6 @@
             if(window.confirm("¿Eliminar este evento permanentemente?")) {
                 try {
                     await deleteDoc(doc(db, 'artifacts', targetAppId, 'users', user.uid, 'notes', noteId));
-                    // BUG FIX: Si se borra mientras el editor está abierto, lo cierra por seguridad
                     if (editingNoteId === noteId) closeEditor();
                 } catch (error) { 
                     console.error("Error al borrar:", error); 
@@ -533,7 +536,6 @@
                     if (elTextarea.value) { elTextarea.value += '\n' + text; } 
                     else { elTextarea.value = text; }
                     
-                    // BUG FIX: Respetar límite de caracteres incluso al inyectar por JavaScript
                     if (elTextarea.value.length > 5000) {
                         elTextarea.value = elTextarea.value.substring(0, 5000);
                         alert("El texto se ha recortado a 5000 caracteres para evitar errores.");
@@ -602,7 +604,7 @@
 
         const validateTextarea = () => { elBtnSaveNote.disabled = elTextarea.value.trim().length === 0; };
 
-        // --- LISTENERS (FIX BUG Día 31: Agregando .setDate(1) antes de cambiar mes) ---
+        // --- LISTENERS ---
         document.getElementById('btn-prev-month').addEventListener('click', () => { 
             currentDate.setDate(1); 
             currentDate.setMonth(currentDate.getMonth() - 1); 
