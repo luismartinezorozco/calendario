@@ -431,7 +431,8 @@
                     } catch (e) { console.error(e); }
                 } else {
                     console.error("Error conectando con Google:", error);
-                    alert("Hubo un error al conectar con Google.");
+                    // Muestra el mensaje exacto del error para poder diagnosticarlo mejor
+                    alert("Hubo un error al conectar con Google: " + error.message);
                 }
             }
         };
