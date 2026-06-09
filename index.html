@@ -158,7 +158,8 @@
     <!-- SCRIPT DE LA APLICACIÓN -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, linkWithRedirect, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // IMPORTANTE: Volvemos a los métodos de Popup que son más estables cuando el dominio está autorizado
+        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, linkWithPopup, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURACIÓN DE FIREBASE ---
@@ -183,8 +184,11 @@
         const googleProvider = new GoogleAuthProvider();
         googleProvider.setCustomParameters({ prompt: 'select_account' });
         
-        // ID FIJO: Garantiza que Vercel y el entorno local siempre escriban y lean en el mismo lugar
         const targetAppId = 'mi-app-calendario-seguro';
+        
+        // --- DETECCIÓN DE ENTORNO LOCAL ---
+        // Firebase Auth NO funciona si abres el archivo con doble clic (file://)
+        const isLocalFile = window.location.protocol === 'file:';
 
         // --- UTILIDADES ---
         const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -360,7 +364,6 @@
                 const pText = document.createElement('p');
                 pText.className = "text-gray-800 text-[14px] sm:text-[15px] whitespace-pre-wrap font-medium leading-snug line-clamp-3";
                 
-                // ASIGNACIÓN SEGURA: previene la inyección de código (XSS)
                 pText.textContent = note.content; 
                 
                 const timeStr = new Date(note.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -383,50 +386,37 @@
             updateUI();
 
             if (!auth || !db) {
-                console.error("Firebase no pudo inicializarse correctamente.");
+                console.error("Firebase no pudo inicializarse.");
                 return;
             }
 
-            try {
-                // 1. REVISAR SI VENIMOS DE UNA REDIRECCIÓN DE GOOGLE PRIMERO
-                try {
-                    const redirectResult = await getRedirectResult(auth);
-                    if (redirectResult) {
-                        console.log("Sincronización exitosa con Google.");
-                    }
-                } catch (error) {
-                    if (error.code === 'auth/credential-already-in-use') {
-                        // El correo ya tenía datos. Forzamos inicio de sesión normal.
-                        await signInWithRedirect(auth, googleProvider);
-                        return; // Se detiene aquí porque la página recargará
-                    } else if (error.code === 'auth/unauthorized-domain') {
-                        console.error("Dominio no autorizado por Firebase:", window.location.hostname);
-                        alert(`Para probar el inicio de sesión aquí, autoriza este dominio en Firebase:\n\n${window.location.hostname}\n\n(En Firebase ve a Authentication -> Configuración -> Dominios autorizados)`);
-                    } else {
-                        console.error("Error al volver de Google:", error);
-                    }
-                }
+            if (isLocalFile) {
+                alert("⚠️ AVISO: Estás abriendo el archivo localmente (file://).\n\nPara que la sincronización en la nube funcione, debes abrir la aplicación desde Vercel. Por ahora, usarás el modo 'Solo Memoria'.");
+            }
 
-                // 2. ESCUCHAR EL ESTADO DE LA SESIÓN DE FORMA SEGURA
+            try {
+                await auth.authStateReady();
+
+                // ESCUCHAR EL ESTADO DE LA SESIÓN
                 onAuthStateChanged(auth, async (currentUser) => {
                     user = currentUser;
                     
                     if (!user) {
-                        // No hay usuario activo. Limpiamos datos y creamos sesión Anónima
+                        // Limpiamos datos por seguridad si no hay sesión
                         notes = [];
                         updateUI();
                         if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
                         
                         try {
+                            // Intentamos el inicio anónimo (Fallará silenciosamente si es file://, lo cual es esperado)
                             await signInAnonymously(auth);
                         } catch (e) {
-                            console.error("Error Auth Anónima:", e);
-                            alert("Fallo de conexión: Asegúrate de habilitar el inicio de sesión 'Anónimo' en tu consola de Firebase.");
+                            console.warn("No se pudo iniciar sesión anónima. Trabajando en modo memoria local.", e.message);
                         }
                         return;
                     }
                     
-                    // 3. CONECTAR A LA BASE DE DATOS
+                    // CONECTAR A LA BASE DE DATOS
                     if (unsubscribeSnapshot) unsubscribeSnapshot();
                     
                     const notesRef = collection(db, 'artifacts', targetAppId, 'users', user.uid, 'notes');
@@ -436,9 +426,6 @@
                         updateUI();
                     }, (error) => {
                         console.error("Error al obtener los datos de Firestore:", error);
-                        if (error.code === 'permission-denied') {
-                            alert("Acceso denegado: Por favor verifica que las Reglas de Firestore en la consola estén correctamente publicadas.");
-                        }
                     });
                 });
             } catch (error) { 
@@ -447,17 +434,33 @@
         };
 
         const handleGoogleLogin = async () => {
+            if (isLocalFile) {
+                alert("No puedes iniciar sesión con Google abriendo el archivo en tu PC local. Por favor, sube el archivo a Vercel e inténtalo desde allí.");
+                return;
+            }
+
             try {
                 if (user && user.isAnonymous) {
-                    await linkWithRedirect(user, googleProvider);
+                    await linkWithPopup(user, googleProvider);
+                    alert("¡Éxito! Tus notas ahora están respaldadas en tu cuenta de Google.");
                 } else {
-                    await signInWithRedirect(auth, googleProvider);
+                    await signInWithPopup(auth, googleProvider);
                 }
+                closeSync();
+                updateUI();
             } catch (error) {
-                console.error("Error iniciando redirección:", error);
-                if (error.code === 'auth/unauthorized-domain') {
-                    alert(`Seguridad de Firebase:\n\nDebes agregar el siguiente dominio a tu consola de Firebase (Authentication > Configuración > Dominios autorizados):\n\n${window.location.hostname}`);
-                } else {
+                console.error("Error iniciando popup de Google:", error);
+                if (error.code === 'auth/credential-already-in-use') {
+                    try {
+                        await signInWithPopup(auth, googleProvider);
+                        alert("Has iniciado sesión. Se han cargado las notas que tenías en la nube.");
+                        closeSync();
+                    } catch (e) { console.error(e); }
+                } else if (error.code === 'auth/unauthorized-domain') {
+                    alert(`Seguridad de Firebase:\n\nDebes agregar este dominio a tu consola de Firebase (Authentication > Configuración > Dominios autorizados):\n\n${window.location.hostname}`);
+                } else if (error.code === 'auth/popup-blocked') {
+                    alert("Tu navegador bloqueó la ventana de inicio de sesión. Por favor, permite las ventanas emergentes (pop-ups) para este sitio.");
+                } else if (error.code !== 'auth/popup-closed-by-user') {
                     alert("Hubo un problema al iniciar la conexión segura: " + error.message);
                 }
             }
@@ -487,13 +490,8 @@
             }, 200);
         };
 
-        // --- ACCIONES DE NOTA (PROTEGIDAS) ---
+        // --- ACCIONES DE NOTA ---
         const saveNoteAction = async () => {
-            if (!user || !user.uid) {
-                alert("Error de seguridad: Sesión no autorizada.");
-                return;
-            }
-
             const content = elTextarea.value.trim().substring(0, 5000); 
             const dateKey = formatDateKey(selectedDate);
             if (!content) return;
@@ -501,37 +499,48 @@
             elBtnSaveNote.disabled = true;
 
             try {
-                const notesRef = collection(db, 'artifacts', targetAppId, 'users', user.uid, 'notes');
-                if (editingNoteId) {
-                    await updateDoc(doc(db, 'artifacts', targetAppId, 'users', user.uid, 'notes', editingNoteId), {
-                        content: content, updatedAt: Date.now()
-                    });
+                if (user && user.uid && !isLocalFile) {
+                    // MODO NUBE
+                    const notesRef = collection(db, 'artifacts', targetAppId, 'users', user.uid, 'notes');
+                    if (editingNoteId) {
+                        await updateDoc(doc(db, 'artifacts', targetAppId, 'users', user.uid, 'notes', editingNoteId), {
+                            content: content, updatedAt: Date.now()
+                        });
+                    } else {
+                        await addDoc(notesRef, {
+                            dateKey: dateKey, content: content, createdAt: Date.now(), updatedAt: Date.now()
+                        });
+                    }
                 } else {
-                    await addDoc(notesRef, {
-                        dateKey: dateKey, content: content, createdAt: Date.now(), updatedAt: Date.now()
-                    });
+                    // MODO MEMORIA LOCAL (Fallback para cuando se prueba en la PC)
+                    if (editingNoteId) {
+                        const idx = notes.findIndex(n => n.id === editingNoteId);
+                        if (idx > -1) notes[idx].content = content;
+                    } else {
+                        notes.push({ id: Date.now().toString(), dateKey: dateKey, content: content, createdAt: Date.now() });
+                    }
+                    updateUI();
                 }
                 closeEditor();
             } catch (error) { 
                 console.error("Error al guardar:", error); 
-                alert("No se pudo guardar. Verifica tu conexión y los permisos de seguridad.");
+                alert("No se pudo guardar. Verifica tu conexión.");
             } 
             finally { elBtnSaveNote.disabled = false; }
         };
 
         const deleteNoteAction = async (noteId) => {
-            if (!user || !user.uid) {
-                alert("Error de seguridad: Sesión no autorizada.");
-                return;
-            }
-
             if(window.confirm("¿Eliminar este evento permanentemente?")) {
                 try {
-                    await deleteDoc(doc(db, 'artifacts', targetAppId, 'users', user.uid, 'notes', noteId));
+                    if (user && user.uid && !isLocalFile) {
+                        await deleteDoc(doc(db, 'artifacts', targetAppId, 'users', user.uid, 'notes', noteId));
+                    } else {
+                        notes = notes.filter(n => n.id !== noteId);
+                        updateUI();
+                    }
                     if (editingNoteId === noteId) closeEditor();
                 } catch (error) { 
                     console.error("Error al borrar:", error); 
-                    alert("No se pudo eliminar. Verifica tu conexión.");
                 }
             }
         };
@@ -556,7 +565,7 @@
             }
         };
 
-        // --- CONTROL DE MODALES (Bloqueo de fondo) ---
+        // --- CONTROL DE MODALES ---
         const openEditor = (note = null) => {
             elScrollArea.classList.replace('overflow-y-auto', 'overflow-hidden');
             modalEditor.classList.remove('pointer-events-none', 'opacity-0');
