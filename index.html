@@ -113,12 +113,39 @@
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- CONFIGURACIÓN DE FIREBASE ---
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        // --- ESTADO GLOBAL ---
+        let user = null;
+        let notes = [];
+        let currentDate = new Date();
+        let selectedDate = new Date();
+        let editingNoteId = null;
+        let previewNoteObj = null;
+        let unsubscribeSnapshot = null;
+        
+        // --- VARIABLES FIREBASE ---
+        let app, auth, db;
+        let isFirebaseConfigured = false;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'mi-app-calendario-seguro';
+
+        // --- CONFIGURACIÓN DE FIREBASE PROTEGIDA ---
+        const fallbackConfig = {}; // Vacío intencionalmente
+        const firebaseConfig = typeof __firebase_config !== 'undefined' && __firebase_config 
+            ? JSON.parse(__firebase_config) 
+            : fallbackConfig;
+            
+        try {
+            // Solo iniciar Firebase si hay credenciales reales configuradas
+            if (Object.keys(firebaseConfig).length > 0) {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                isFirebaseConfigured = true;
+            } else {
+                console.warn("Ejecutando en modo local/offline. Los datos no se guardarán en la nube.");
+            }
+        } catch (error) {
+            console.error("Error al inicializar Firebase:", error);
+        }
 
         // --- UTILIDADES DE FECHA ---
         const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -139,15 +166,6 @@
             return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         };
 
-        // --- ESTADO GLOBAL ---
-        let user = null;
-        let notes = [];
-        let currentDate = new Date();
-        let selectedDate = new Date();
-        let editingNoteId = null;
-        let previewNoteObj = null;
-        let unsubscribeSnapshot = null;
-
         // --- ELEMENTOS DEL DOM ---
         const elMonthTitle = document.getElementById('month-title');
         const elCalendarGrid = document.getElementById('calendar-grid');
@@ -162,7 +180,7 @@
             DAY_NAMES_SHORT.forEach(day => {
                 const div = document.createElement('div');
                 div.className = "text-center py-1.5 text-[13px] sm:text-sm font-bold text-white tracking-wide";
-                div.textContent = day; // Blindado
+                div.textContent = day; 
                 header.appendChild(div);
             });
         };
@@ -172,11 +190,11 @@
             renderCalendar();
             renderBanner();
             renderNotes();
-            lucide.createIcons(); // Refrescar iconos
+            lucide.createIcons(); // Dibuja los iconos correctamente
         };
 
         const renderCalendar = () => {
-            elCalendarGrid.innerHTML = ''; // Limpiar
+            elCalendarGrid.innerHTML = ''; 
             elMonthTitle.textContent = `${MONTH_NAMES[currentDate.getMonth()]}, ${currentDate.getFullYear()}`;
 
             const year = currentDate.getFullYear();
@@ -184,21 +202,18 @@
             const daysInMonth = getDaysInMonth(year, month);
             const firstDayIndex = getFirstDayOfMonth(year, month);
 
-            // Agrupar notas para búsqueda rápida
             const notesByDate = {};
             notes.forEach(n => {
                 if (!notesByDate[n.dateKey]) notesByDate[n.dateKey] = [];
                 notesByDate[n.dateKey].push(n);
             });
 
-            // Días vacíos previos
             for (let i = 0; i < firstDayIndex; i++) {
                 const emptyDiv = document.createElement('div');
                 emptyDiv.className = "border-r border-b border-gray-200 bg-gray-50/50 aspect-[5/4] sm:aspect-square";
                 elCalendarGrid.appendChild(emptyDiv);
             }
 
-            // Días del mes
             for (let i = 1; i <= daysInMonth; i++) {
                 const date = new Date(year, month, i);
                 const isToday = isSameDay(date, new Date());
@@ -214,13 +229,13 @@
                 
                 cell.onclick = () => {
                     selectedDate = date;
-                    currentDate = new Date(date); // Mantiene el mes actual sincronizado
+                    currentDate = new Date(date); 
                     updateUI();
                 };
 
                 const span = document.createElement('span');
                 span.className = `text-lg sm:text-xl font-medium z-10 ${isToday && !isSelected ? 'text-red-600 font-bold' : ''} ${isWeekend && !isSelected && !isToday ? 'text-blue-700' : ''} ${!isWeekend && !isSelected && !isToday ? 'text-black font-bold' : ''} ${isSelected ? 'text-blue-900 font-bold' : ''}`;
-                span.textContent = i; // Blindado
+                span.textContent = i; 
 
                 cell.appendChild(span);
 
@@ -255,27 +270,23 @@
                 const noteDiv = document.createElement('div');
                 noteDiv.className = "p-3 sm:p-4 flex items-start gap-4 hover:bg-gray-50 transition-colors cursor-pointer active:bg-gray-100";
                 
-                // Acción de Vista Previa al tocar la nota
                 noteDiv.onclick = () => openPreview(note);
 
-                // Icono Izquierdo
                 const iconContainer = document.createElement('div');
                 iconContainer.className = "w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0 text-purple-800 border-2 border-purple-100";
                 iconContainer.innerHTML = '<i data-lucide="align-left" class="w-6 h-6"></i>';
 
-                // Texto Central Seguro (Blindado contra XSS)
                 const textContainer = document.createElement('div');
                 textContainer.className = "flex-1 min-w-0 pt-0.5 pointer-events-none";
                 const pText = document.createElement('p');
                 pText.className = "text-gray-900 text-[15px] sm:text-base whitespace-pre-wrap font-medium leading-tight line-clamp-3";
-                pText.textContent = note.content; // PROTECCIÓN TOTAL XSS
+                pText.textContent = note.content; 
                 const pHint = document.createElement('p');
                 pHint.className = "text-blue-600 text-xs mt-1.5 font-bold opacity-80 flex items-center";
                 pHint.innerHTML = '<i data-lucide="mouse-pointer-click" class="w-3.5 h-3.5 mr-1"></i> Tocar para ver completo';
                 textContainer.appendChild(pText);
                 textContainer.appendChild(pHint);
 
-                // Botones Acciones
                 const actionsDiv = document.createElement('div');
                 actionsDiv.className = "flex flex-col gap-2 flex-shrink-0";
                 
@@ -300,73 +311,100 @@
             });
         };
 
-        // --- OPERACIONES DE BASE DE DATOS (FIREBASE) ---
-        const initAuth = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
+        // --- FLUJO DE AUTENTICACIÓN / DATOS ---
+        const initDataFlow = async () => {
+            // 1. Mostrar UI inmediatamente sin importar Firebase
+            initWeekdays();
+            updateUI();
+
+            // 2. Si Firebase está configurado, conectar a la nube
+            if (isFirebaseConfigured) {
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    
+                    onAuthStateChanged(auth, (currentUser) => {
+                        user = currentUser;
+                        if (user) {
+                            if(unsubscribeSnapshot) unsubscribeSnapshot();
+                            const notesRef = collection(db, 'artifacts', appId, 'users', user.uid, 'notes');
+                            unsubscribeSnapshot = onSnapshot(notesRef, (snapshot) => {
+                                notes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                                updateUI();
+                            }, (error) => console.error("Error obteniendo notas:", error));
+                        }
+                    });
+                } catch (error) {
+                    console.error("Error de autenticación:", error);
                 }
-            } catch (error) {
-                console.error("Error de autenticación:", error);
             }
         };
 
-        onAuthStateChanged(auth, (currentUser) => {
-            user = currentUser;
-            if (user) {
-                if(unsubscribeSnapshot) unsubscribeSnapshot();
-                const notesRef = collection(db, 'artifacts', appId, 'users', user.uid, 'notes');
-                unsubscribeSnapshot = onSnapshot(notesRef, (snapshot) => {
-                    notes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    updateUI();
-                }, (error) => console.error("Error obteniendo notas:", error));
-            }
-        });
-
+        // --- ACCIONES DE GUARDAR / ELIMINAR ---
         const saveNoteAction = async () => {
             const content = elTextarea.value.trim();
-            if (!content || !user || !selectedDate) return;
+            const dateKey = formatDateKey(selectedDate);
+            if (!content) return;
 
             elBtnSaveNote.disabled = true;
-            const dateKey = formatDateKey(selectedDate);
-            const notesRef = collection(db, 'artifacts', appId, 'users', user.uid, 'notes');
 
             try {
-                if (editingNoteId) {
-                    await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'notes', editingNoteId), {
-                        content: content,
-                        updatedAt: Date.now()
-                    });
+                if (isFirebaseConfigured && user) {
+                    // MODO NUBE (Firebase)
+                    const notesRef = collection(db, 'artifacts', appId, 'users', user.uid, 'notes');
+                    if (editingNoteId) {
+                        await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'notes', editingNoteId), {
+                            content: content, updatedAt: Date.now()
+                        });
+                    } else {
+                        await addDoc(notesRef, {
+                            dateKey: dateKey, content: content, createdAt: Date.now(), updatedAt: Date.now()
+                        });
+                    }
                 } else {
-                    await addDoc(notesRef, {
-                        dateKey: dateKey,
-                        content: content,
-                        createdAt: Date.now(),
-                        updatedAt: Date.now()
-                    });
+                    // MODO LOCAL (Memoria)
+                    if (editingNoteId) {
+                        const index = notes.findIndex(n => n.id === editingNoteId);
+                        if(index > -1) notes[index].content = content;
+                    } else {
+                        notes.push({
+                            id: Date.now().toString(),
+                            dateKey: dateKey,
+                            content: content,
+                            createdAt: Date.now(),
+                            updatedAt: Date.now()
+                        });
+                    }
+                    updateUI(); // Forzar actualización visual
                 }
                 closeEditor();
             } catch (error) {
                 console.error("Error guardando la nota:", error);
+                alert("Hubo un error al guardar la nota.");
             } finally {
                 elBtnSaveNote.disabled = false;
             }
         };
 
         const deleteNoteAction = async (noteId) => {
-            if (!user) return;
             if(window.confirm("¿Eliminar esta nota permanentemente?")) {
                 try {
-                    await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'notes', noteId));
+                    if (isFirebaseConfigured && user) {
+                        await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'notes', noteId));
+                    } else {
+                        notes = notes.filter(n => n.id !== noteId);
+                        updateUI();
+                    }
                 } catch (error) {
                     console.error("Error eliminando:", error);
                 }
             }
         };
 
-        // --- CONTROLADORES DE MODALES Y UI ---
+        // --- CONTROLADORES DE MODALES ---
         const openEditor = (note = null) => {
             document.getElementById('editor-modal').classList.remove('hidden');
             if (note) {
@@ -391,7 +429,6 @@
         const openPreview = (note) => {
             previewNoteObj = note;
             document.getElementById('preview-modal').classList.remove('hidden');
-            // BLINDADO: Usar textContent
             document.getElementById('preview-text').textContent = note.content;
         };
 
@@ -416,12 +453,10 @@
         });
         document.getElementById('btn-add-event').addEventListener('click', () => openEditor());
         
-        // Editor
         document.getElementById('btn-close-editor').addEventListener('click', closeEditor);
         elBtnSaveNote.addEventListener('click', saveNoteAction);
         elTextarea.addEventListener('input', validateTextarea);
 
-        // Preview
         document.getElementById('preview-modal').addEventListener('click', closePreview);
         document.getElementById('btn-close-preview').addEventListener('click', closePreview);
         document.getElementById('btn-preview-delete').addEventListener('click', () => {
@@ -435,10 +470,8 @@
             openEditor(n);
         });
 
-        // --- INICIO DE LA APP ---
-        initWeekdays();
-        updateUI();
-        initAuth();
+        // ARRANCAR APP
+        initDataFlow();
 
     </script>
 </body>
