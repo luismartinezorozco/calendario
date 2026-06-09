@@ -276,7 +276,6 @@
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
         // --- REGISTRO DEL SERVICE WORKER (CARGA 100% OFFLINE) ---
-        // Exigimos https o localhost por reglas estrictas de seguridad de navegadores
         if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js').then((registration) => {
@@ -665,13 +664,16 @@
             }, 200);
         };
 
-        // --- ACCIONES DE NOTA Y COMPARTIR ---
+        // --- ACCIONES DE NOTA Y COMPARTIR (CON PREVENCIÓN DE BOTÓN PEGADO) ---
         const saveNoteAction = async () => {
             const content = elTextarea.value.trim().substring(0, 5000); 
             const dateKey = formatDateKey(selectedDate);
             if (!content) return;
 
+            // Prevenir doble clic y estado pegado en móviles
             elBtnSaveNote.disabled = true;
+            elBtnSaveNote.blur(); // Evita que se quede el estado "hundido" en iOS
+            elBtnSaveNote.textContent = 'Guardando...';
 
             try {
                 if (user && user.uid && !isLocalFile) {
@@ -697,8 +699,15 @@
                 closeEditor();
             } catch (error) { 
                 console.error("[ERROR GUARDAR]", error); 
+                alert("No se pudo guardar la nota. Verifica tu conexión.");
             } 
-            finally { elBtnSaveNote.disabled = false; }
+            finally { 
+                // Restauramos el botón después de la animación de cierre (200ms)
+                setTimeout(() => {
+                    elBtnSaveNote.textContent = 'Guardar';
+                    validateTextarea(); // Vuelve a revisar si debe estar habilitado o no
+                }, 250); 
+            }
         };
 
         const deleteNoteAction = async (noteId) => {
