@@ -158,8 +158,8 @@
     <!-- SCRIPT DE LA APLICACIÓN -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        // Importación completa de los métodos modulares
-        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, linkWithPopup, signInWithPopup, linkWithRedirect, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // Importamos signInWithCredential para la técnica avanzada Multidispositivo
+        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, linkWithPopup, signInWithPopup, linkWithRedirect, signInWithRedirect, getRedirectResult, signOut, signInWithCredential } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURACIÓN DE FIREBASE ---
@@ -188,7 +188,6 @@
         
         // --- DETECCIÓN DE ENTORNO LOCAL ---
         const isLocalFile = window.location.protocol === 'file:';
-        // Detectar dispositivo móvil para usar la estrategia Híbrida de Auth
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
         // --- UTILIDADES ---
@@ -381,102 +380,89 @@
             });
         };
 
-        // --- LÓGICA DEFENSIVA DE DATOS Y AUTENTICACIÓN ---
+        // --- LÓGICA DEFENSIVA MULTIDISPOSITIVO (NÚCLEO MEJORADO) ---
         const initDataFlow = async () => {
             initWeekdays();
             updateUI();
 
-            if (!auth || !db) {
-                console.error("[INIT] Firebase no se instanció correctamente.");
+            if (!auth || !db) return;
+
+            if (isLocalFile) {
+                console.warn("[INIT] Archivo Local detectado.");
                 return;
             }
 
-            if (isLocalFile) {
-                console.warn("[INIT] Modo Archivo Local detectado. Firebase Auth se suspenderá.");
-                alert("⚠️ Estás abriendo el archivo localmente.\n\nPara que la sincronización en la nube funcione, debes abrir la aplicación desde Vercel. Por ahora, usarás el modo 'Solo Memoria'.");
-                return; // Cortamos el flujo aquí para evitar falsas esperanzas en PC local
-            }
-
             try {
-                console.log("[INIT] Esperando Auth State...");
                 await auth.authStateReady();
 
-                // FASE 1: Resolución de Redirección (Protección contra el error "credential-already-in-use")
+                // FASE 1: Resolución para Celulares (Redirect)
                 try {
-                    console.log("[INIT] Verificando redirecciones previas...");
                     const redirectResult = await getRedirectResult(auth);
                     if (redirectResult) {
                         console.log("[INIT] Autenticación de Google exitosa vía Redirect.");
                     }
                 } catch (error) {
                     console.error("[ERROR REDIRECT]", error);
-                    // RUTA DE ESCAPE SEGURA: Si la cuenta de Google ya existe en Firebase (porque el usuario 
-                    // la creó en otro dispositivo), falla el "Link". Aquí forzamos el "Login".
+                    // RUTA DE RESCATE MÓVIL: Atrapa la credencial existente y hace inicio de sesión directo
                     if (error.code === 'auth/credential-already-in-use') {
-                        console.log("[RESCATE] Cuenta ya existente. Forzando inicio de sesión (Pisando cuenta anónima)...");
-                        await signInWithRedirect(auth, googleProvider);
-                        return; // Se detiene aquí porque la página va a recargar hacia Google
+                        console.log("[RESCATE MÓVIL] Cuenta de Google ya vinculada a otro dispositivo. Migrando sesión...");
+                        try {
+                            const credential = GoogleAuthProvider.credentialFromError(error);
+                            await signInWithCredential(auth, credential);
+                            console.log("[RESCATE MÓVIL] Sesión iniciada con éxito. Sincronizando datos...");
+                        } catch (err) {
+                            console.error("[ERROR EN RESCATE MÓVIL]", err);
+                        }
+                    } else if (error.code === 'auth/unauthorized-domain') {
+                        alert(`Para probar el inicio de sesión aquí, autoriza este dominio en Firebase:\n\n${window.location.hostname}`);
                     }
                 }
 
-                // FASE 2: Escuchar el Estado de Sesión Establecido
+                // FASE 2: Escuchar Sesión
                 onAuthStateChanged(auth, async (currentUser) => {
                     user = currentUser;
                     
                     if (!user) {
-                        console.log("[AUTH] No hay usuario activo. Iniciando flujo Anónimo...");
                         notes = [];
                         updateUI();
                         if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
                         
                         try {
                             await signInAnonymously(auth);
-                            console.log("[AUTH] Sesión anónima creada con éxito.");
                         } catch (e) {
-                            console.error("[ERROR] Falló Auth Anónima:", e);
+                            console.error("Error Auth Anónima:", e);
                         }
-                        return; // Se vuelve a disparar onAuthStateChanged
+                        return;
                     }
-                    
-                    console.log(`[AUTH] Usuario verificado: ${user.uid} (Anónimo: ${user.isAnonymous})`);
                     
                     // FASE 3: Conexión Estable y Segura a la Base de Datos
                     if (unsubscribeSnapshot) unsubscribeSnapshot();
                     
                     const notesRef = collection(db, 'artifacts', targetAppId, 'users', user.uid, 'notes');
                     
-                    console.log("[DB] Suscribiendo a Firestore en:", `artifacts/${targetAppId}/users/${user.uid}/notes`);
                     unsubscribeSnapshot = onSnapshot(notesRef, (snapshot) => {
                         notes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        console.log(`[DB] Se cargaron ${notes.length} notas desde la nube.`);
                         updateUI();
                     }, (error) => {
-                        console.error("[ERROR DB] Fallo al sincronizar Firestore:", error);
-                        if (error.code === 'permission-denied') {
-                            alert("Acceso denegado: Firebase ha bloqueado la lectura. Revisa las Reglas de Firestore.");
-                        }
+                        console.error("Error Firestore:", error);
                     });
                 });
             } catch (error) { 
-                console.error("[ERROR FATAL] Fallo general en InitDataFlow:", error); 
+                console.error("Error iniciando el flujo de datos:", error); 
             }
         };
 
         const handleGoogleLogin = async () => {
             if (isLocalFile) {
-                alert("No puedes iniciar sesión con Google abriendo el archivo en tu PC local. Por favor, súbelo a Vercel e inténtalo desde allí.");
+                alert("Sube este archivo a Vercel para probar la sincronización de Google.");
                 return;
             }
-
-            console.log(`[LOGIN] Solicitando Google Login. Dispositivo Móvil: ${isMobile}`);
 
             try {
                 if (user && user.isAnonymous) {
                     if (isMobile) {
-                        // En móviles forzamos Redirección para evadir los bloqueadores estrictos de Safari/Chrome
                         await linkWithRedirect(user, googleProvider);
                     } else {
-                        // En PC usamos Popup porque es más elegante y no recarga la página
                         await linkWithPopup(user, googleProvider);
                         alert("¡Sincronización exitosa! Tus datos están respaldados.");
                         closeSync();
@@ -492,20 +478,19 @@
             } catch (error) {
                 console.error("[ERROR LOGIN]", error);
                 
-                // Si usamos Popup (en Desktop) y falla por colisión, interceptamos aquí mismo
+                // RUTA DE RESCATE ESCRITORIO: Evita el bloqueo si la cuenta ya se usó en el celular
                 if (error.code === 'auth/credential-already-in-use') {
                     try {
-                        console.log("[RESCATE DESKTOP] Forzando inicio de sesión...");
-                        await signInWithPopup(auth, googleProvider);
-                        alert("Sesión iniciada con éxito. Se han cargado las notas de tu cuenta.");
+                        console.log("[RESCATE DESKTOP] Cuenta ya existente. Forzando inicio de sesión...");
+                        const credential = GoogleAuthProvider.credentialFromError(error);
+                        await signInWithCredential(auth, credential);
+                        alert("Has iniciado sesión correctamente. Sincronizando datos de tus otros dispositivos...");
                         closeSync();
                     } catch (e) { 
-                        console.error("[ERROR] Rescate Desktop falló:", e); 
+                        console.error("[ERROR RESCATE DESKTOP]", e); 
                     }
                 } else if (error.code === 'auth/unauthorized-domain') {
-                    alert(`El dominio actual (${window.location.hostname}) no está autorizado en Firebase.\n\nVe a tu consola de Firebase -> Authentication -> Configuración -> Dominios autorizados y agrega:\n${window.location.hostname}`);
-                } else if (error.code === 'auth/popup-blocked') {
-                    alert("Tu navegador bloqueó la ventana de inicio de sesión. Por favor, permite las ventanas emergentes (pop-ups) para este sitio web.");
+                    alert(`El dominio actual (${window.location.hostname}) no está autorizado en Firebase.\nAgrega este dominio en Configuración > Dominios autorizados.`);
                 } else if (error.code !== 'auth/popup-closed-by-user') {
                     alert(`Hubo un error con la autenticación: ${error.message}`);
                 }
@@ -546,7 +531,6 @@
 
             try {
                 if (user && user.uid && !isLocalFile) {
-                    // MODO NUBE
                     const notesRef = collection(db, 'artifacts', targetAppId, 'users', user.uid, 'notes');
                     if (editingNoteId) {
                         await updateDoc(doc(db, 'artifacts', targetAppId, 'users', user.uid, 'notes', editingNoteId), {
@@ -558,7 +542,6 @@
                         });
                     }
                 } else {
-                    // MODO MEMORIA LOCAL (Fallback para cuando se prueba en la PC sin conexión)
                     if (editingNoteId) {
                         const idx = notes.findIndex(n => n.id === editingNoteId);
                         if (idx > -1) notes[idx].content = content;
@@ -570,7 +553,6 @@
                 closeEditor();
             } catch (error) { 
                 console.error("[ERROR GUARDAR]", error); 
-                alert("No se pudo guardar la nota en la nube. Verifica tu conexión de internet.");
             } 
             finally { elBtnSaveNote.disabled = false; }
         };
