@@ -65,8 +65,8 @@
                     <h2 id="month-title" class="text-2xl font-black text-gray-800 capitalize tracking-tight">Mes, Año</h2>
                 </div>
                 <div class="flex items-center gap-1">
-                    <!-- Botón Instalar App (PWA) -->
-                    <button id="btn-install" class="p-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-full smooth-transition active:scale-95" title="Instalar como App">
+                    <!-- Botón Instalar App (PWA) - Oculto por defecto -->
+                    <button id="btn-install" class="hidden p-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-full smooth-transition active:scale-95" title="Instalar como App">
                         <i data-lucide="download" class="w-5 h-5"></i>
                     </button>
 
@@ -202,24 +202,22 @@
                     <i data-lucide="download" class="w-8 h-8"></i>
                 </div>
                 
-                <h3 class="text-xl font-black text-gray-900 mb-2">Instalar como App</h3>
+                <h3 class="text-xl font-black text-gray-900 mb-2">Instala la Aplicación</h3>
                 <p class="text-sm text-gray-600 mb-6 leading-relaxed">
-                    Para tener esta aplicación siempre a la mano en tu pantalla de inicio, sigue estos pasos según tu dispositivo:
+                    Para usar este calendario sin conexión y directamente desde tu pantalla de inicio, sigue este paso:
                 </p>
 
                 <div class="text-left bg-gray-50 p-4 rounded-xl mb-4 border border-gray-100">
                     <h4 class="font-bold text-gray-800 mb-1 flex items-center gap-2">
-                        <i data-lucide="apple" class="w-4 h-4 text-gray-600"></i> iPhone (Safari)
+                        <i data-lucide="apple" class="w-4 h-4 text-gray-600"></i> En tu iPhone o iPad:
                     </h4>
-                    <p class="text-xs text-gray-600">Toca el ícono de <b>Compartir</b> <span class="inline-block border border-gray-300 bg-white rounded px-1.5 shadow-sm">↑</span> en la barra inferior y selecciona <b>"Agregar a inicio"</b> <span class="inline-block border border-gray-300 bg-white rounded px-1.5 shadow-sm">+</span>.</p>
+                    <p class="text-sm text-gray-600 mt-2">1. Toca el ícono de <b>Compartir</b> <span class="inline-block border border-gray-300 bg-white rounded px-1.5 shadow-sm">↑</span> en la barra de tu navegador.</p>
+                    <p class="text-sm text-gray-600 mt-2">2. Selecciona <b>"Agregar a inicio"</b> <span class="inline-block border border-gray-300 bg-white rounded px-1.5 shadow-sm">+</span>.</p>
                 </div>
-
-                <div class="text-left bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <h4 class="font-bold text-gray-800 mb-1 flex items-center gap-2">
-                        <i data-lucide="smartphone" class="w-4 h-4 text-gray-600"></i> Android (Chrome)
-                    </h4>
-                    <p class="text-xs text-gray-600">Toca el menú de <b>3 puntos</b> <span class="inline-block border border-gray-300 bg-white rounded px-1.5 shadow-sm">⋮</span> en la esquina superior y selecciona <b>"Agregar a la pantalla principal"</b> o <b>"Instalar aplicación"</b>.</p>
-                </div>
+                
+                <button id="btn-got-it" class="w-full mt-2 py-3 bg-gray-900 text-white font-bold rounded-xl active:scale-95 smooth-transition">
+                    Entendido
+                </button>
             </div>
         </div>
 
@@ -256,6 +254,11 @@
         
         const targetAppId = 'mi-app-calendario-seguro';
         const isLocalFile = window.location.protocol === 'file:';
+        
+        // Detección estricta de Entorno (iOS vs Android y Standalone)
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
         // --- UTILIDADES ---
         const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -450,14 +453,25 @@
             });
         };
 
-        // --- LÓGICA PWA E INSTALACIÓN NATIVA ---
+        // --- LÓGICA PWA E INSTALACIÓN NATIVA INTELIGENTE ---
         let deferredPrompt;
+        
+        // Solo para Android/Chrome: Escucha si el dispositivo soporta el botón nativo de instalar
         window.addEventListener('beforeinstallprompt', (e) => {
-            // Evitar que aparezca el mini-infobar automático de Chrome
             e.preventDefault();
             deferredPrompt = e;
-            // Indicador opcional: Animación sutil de pulso al botón de instalar para avisar que está disponible nativamente
-            document.getElementById('btn-install').classList.add('animate-pulse');
+            // Mostramos el botón oculto solo si Android confirma que se puede instalar y no está ya instalada
+            if (!isStandalone) {
+                const btnInstall = document.getElementById('btn-install');
+                btnInstall.classList.remove('hidden');
+                btnInstall.classList.add('animate-pulse');
+            }
+        });
+
+        // Cuando la app ya fue instalada correctamente (Android)
+        window.addEventListener('appinstalled', () => {
+            document.getElementById('btn-install').classList.add('hidden');
+            deferredPrompt = null;
         });
 
         const openInstallModal = () => {
@@ -474,23 +488,34 @@
             }, 200);
         };
 
+        // Evento manual para el botón (Solo visible en Android)
         document.getElementById('btn-install').addEventListener('click', async () => {
-            // Si el dispositivo acepta el Prompt Nativo (ej: Android/Chrome) se lanza la ventana mágica
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
                 if (outcome === 'accepted') {
                     deferredPrompt = null;
                     document.getElementById('btn-install').classList.remove('animate-pulse');
+                    document.getElementById('btn-install').classList.add('hidden');
                 }
-            } else {
-                // Si es un navegador restrictivo (iPhone/Safari o WebView), abrimos la guía visual en Modal
-                openInstallModal();
             }
         });
 
         document.getElementById('btn-close-install').addEventListener('click', closeInstallModal);
+        document.getElementById('btn-got-it').addEventListener('click', closeInstallModal);
         modalInstall.addEventListener('click', (e) => { if(e.target === modalInstall) closeInstallModal(); });
+
+        // AVISO AUTOMÁTICO EN iOS (Auto-Prompt sin botón)
+        // Se ejecuta solo una vez usando localStorage para no ser spam
+        if (isIOS && !isStandalone) {
+            const hasSeenPrompt = localStorage.getItem('iosPwaPromptShown');
+            if (!hasSeenPrompt) {
+                setTimeout(() => {
+                    openInstallModal();
+                    localStorage.setItem('iosPwaPromptShown', 'true');
+                }, 2500); // 2.5 segundos después de entrar la primera vez
+            }
+        }
 
         // --- LÓGICA DE DATOS Y FLUJO UNIVERSAL SEGURO ---
         const initDataFlow = async () => {
@@ -561,7 +586,6 @@
                 console.error("[ERROR LOGIN]", error);
                 
                 // RUTA DE RESCATE MULTIDISPOSITIVO (MÓVIL Y DESKTOP)
-                // Esto atrapa cuando intentas vincular una cuenta que ya usaste en otro teléfono
                 if (error.code === 'auth/credential-already-in-use') {
                     try {
                         console.log("[RESCATE] Cuenta ya existente. Extrayendo credencial secreta...");
