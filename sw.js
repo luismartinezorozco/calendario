@@ -17,7 +17,3 @@ self.addEventListener('fetch', (event) => {
         })
     );
 });
-
-En cuanto Vercel publique ese pequeño archivo `sw.js`, ¡la magia ocurrirá! La próxima vez que entres a la aplicación desde tu teléfono, el Service Worker se instalará de fondo. Después de eso, **podrás activar el Modo Avión en tu celular, abrir la página y el diseño cargará inmediatamente**.
-
-Si notas algún detalle extraño durante las pruebas sin conexión, avísame e iteramos sobre él.
