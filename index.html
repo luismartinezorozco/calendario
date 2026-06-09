@@ -155,7 +155,7 @@
                 </div>
                 
                 <div class="bg-gray-50 p-4 flex flex-col gap-3 border-t border-gray-100">
-                    <!-- NUEVO BOTÓN: Compartir Evento -->
+                    <!-- BOTÓN: Compartir Evento -->
                     <button id="btn-preview-share" class="w-full py-3 text-blue-700 font-bold bg-blue-50 border border-blue-100 hover:bg-blue-100 rounded-xl smooth-transition active:scale-95 flex items-center justify-center gap-2">
                         <i data-lucide="share-2" class="w-5 h-5"></i> Compartir Evento
                     </button>
@@ -234,7 +234,6 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, linkWithPopup, signInWithPopup, signOut, signInWithCredential } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        // Importamos enableIndexedDbPersistence para el Modo 100% Offline de Firebase
         import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURACIÓN DE FIREBASE ---
@@ -272,10 +271,21 @@
         const targetAppId = 'mi-app-calendario-seguro';
         const isLocalFile = window.location.protocol === 'file:';
         
-        // Detección estricta de Entorno (iOS vs Android y Standalone)
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+        // --- REGISTRO DEL SERVICE WORKER (CARGA 100% OFFLINE) ---
+        // Exigimos https o localhost por reglas estrictas de seguridad de navegadores
+        if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then((registration) => {
+                    console.log('[PWA] ServiceWorker registrado con éxito. App lista para modo offline.');
+                }).catch((err) => {
+                    console.log('[PWA] Aviso: El ServiceWorker no está activo aún porque falta el archivo sw.js en tu servidor.', err);
+                });
+            });
+        }
 
         // --- UTILIDADES ---
         const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -290,7 +300,6 @@
         const isSameDay = (date1, date2) => date1.getFullYear() === date2.getFullYear() && date1.getMonth() === date2.getMonth() && date1.getDate() === date2.getDate();
         const formatDateKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
-        // Copiador seguro para portapapeles
         const copyToClipboard = (text) => {
             if (navigator.clipboard && window.isSecureContext) {
                 return navigator.clipboard.writeText(text);
@@ -335,8 +344,6 @@
         const cardPreview = document.getElementById('preview-card');
         const modalSync = document.getElementById('sync-modal');
         const cardSync = document.getElementById('sync-card');
-        
-        // Elementos PWA Install Modal
         const modalInstall = document.getElementById('install-modal');
         const cardInstall = document.getElementById('install-card');
 
@@ -730,11 +737,9 @@
             }
         };
 
-        // NUEVA FUNCIÓN: Compartir Evento
         const handleShareEvent = async () => {
             if (!previewNoteObj) return;
             
-            // Construir un título formateado con la fecha real del evento
             const [y, m, d] = previewNoteObj.dateKey.split('-');
             const eventDate = new Date(y, m - 1, d);
             const dateStr = `${DAY_NAMES[eventDate.getDay()]}, ${eventDate.getDate()} de ${MONTH_NAMES[eventDate.getMonth()]}`;
@@ -742,7 +747,6 @@
             const textToShare = `📅 *Evento el ${dateStr}*\n\n${previewNoteObj.content}`;
 
             if (navigator.share) {
-                // Teléfonos móviles y navegadores compatibles
                 try {
                     await navigator.share({
                         title: 'Evento del Calendario',
@@ -754,7 +758,6 @@
                     }
                 }
             } else {
-                // Computadoras (Fallback a Portapapeles)
                 try {
                     await copyToClipboard(textToShare);
                     alert("¡Evento copiado al portapapeles! Ya puedes pegarlo en un mensaje.");
@@ -853,7 +856,6 @@
         document.getElementById('btn-preview-delete').addEventListener('click', () => { const id = previewNoteObj.id; closePreview(); setTimeout(()=>deleteNoteAction(id), 250); });
         document.getElementById('btn-preview-edit').addEventListener('click', () => { const n = previewNoteObj; closePreview(); setTimeout(()=>openEditor(n), 250); });
         
-        // Listener del nuevo botón Compartir
         document.getElementById('btn-preview-share').addEventListener('click', handleShareEvent);
 
         // INICIALIZACIÓN FINAL
