@@ -380,19 +380,21 @@
             updateUI();
 
             try {
-                onAuthStateChanged(auth, async (currentUser) => {
-                    // Si no hay usuario al entrar, creamos el "fantasma" (Anónimo)
-                    if (!currentUser) {
-                        await signInAnonymously(auth);
-                        return; // Se volverá a disparar onAuthStateChanged
-                    }
-                    
+                // 1. Asegurar la autenticación ANTES de establecer escuchas en la BD (Evita el "permission-denied")
+                await auth.authStateReady();
+                if (!auth.currentUser) {
+                    await signInAnonymously(auth);
+                }
+                
+                // 2. Ahora sí, con la sesión confirmada, escuchamos cambios
+                onAuthStateChanged(auth, (currentUser) => {
                     user = currentUser;
+                    if (!user) return;
                     
                     // Escuchar las notas en tiempo real
                     if(unsubscribeSnapshot) unsubscribeSnapshot();
                     
-                    // Aseguramos una ruta robusta para Firestore
+                    const targetAppId = typeof __app_id !== 'undefined' ? __app_id : 'mi-app-calendario-seguro';
                     const notesRef = collection(db, 'artifacts', targetAppId, 'users', user.uid, 'notes');
                     
                     unsubscribeSnapshot = onSnapshot(notesRef, (snapshot) => {
