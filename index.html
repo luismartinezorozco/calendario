@@ -158,7 +158,7 @@
     <!-- SCRIPT DE LA APLICACIÓN -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, linkWithPopup, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, linkWithRedirect, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURACIÓN DE FIREBASE ---
@@ -388,6 +388,26 @@
 
             try {
                 await auth.authStateReady();
+
+                // 1. REVISAR SI VENIMOS DE UNA REDIRECCIÓN DE GOOGLE (Solución Bug Móvil)
+                try {
+                    const redirectResult = await getRedirectResult(auth);
+                    if (redirectResult) {
+                        // Sincronización exitosa, la página carga ya con el usuario vinculado de Google
+                        console.log("Sincronización exitosa con Google.");
+                    }
+                } catch (error) {
+                    if (error.code === 'auth/credential-already-in-use') {
+                        // El correo de Google ya tenía datos guardados previamente. 
+                        // Iniciamos sesión normal con esa cuenta en lugar de vincular la nueva.
+                        await signInWithRedirect(auth, googleProvider);
+                        return; // Detenemos la ejecución porque la página va a recargar
+                    } else {
+                        console.error("Error al volver de Google:", error);
+                        alert("Hubo un error al conectar con Google: " + error.message);
+                    }
+                }
+
                 if (!auth.currentUser) {
                     await signInAnonymously(auth);
                 }
@@ -421,24 +441,14 @@
         const handleGoogleLogin = async () => {
             try {
                 if (user && user.isAnonymous) {
-                    await linkWithPopup(user, googleProvider);
-                    alert("¡Éxito! Tus notas ahora están respaldadas en tu cuenta de Google.");
+                    // Usamos Redirect en lugar de Popup para garantizar la compatibilidad móvil
+                    await linkWithRedirect(user, googleProvider);
                 } else {
-                    await signInWithPopup(auth, googleProvider);
+                    await signInWithRedirect(auth, googleProvider);
                 }
-                closeSync();
-                updateUI();
             } catch (error) {
-                if (error.code === 'auth/credential-already-in-use') {
-                    try {
-                        await signInWithPopup(auth, googleProvider);
-                        alert("Has iniciado sesión. Se han cargado las notas que tenías en la nube.");
-                        closeSync();
-                    } catch (e) { console.error(e); }
-                } else {
-                    console.error("Error conectando con Google:", error);
-                    alert("Hubo un error al conectar con Google: " + error.message);
-                }
+                console.error("Error iniciando redirección:", error);
+                alert("Hubo un problema al iniciar la conexión segura: " + error.message);
             }
         };
 
