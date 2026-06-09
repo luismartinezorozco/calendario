@@ -76,13 +76,13 @@
         </button>
 
         <!-- MODAL: EDITOR DE NOTAS (Ventana Flotante Estilo iOS) -->
-        <!-- NOTA: Alineado arriba en móviles (items-start pt-10) para evitar que el teclado lo tape -->
-        <div id="editor-modal" class="fixed inset-0 z-50 bg-black/50 flex items-start sm:items-center justify-center p-4 pt-10 sm:p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
-            <!-- Reducimos la altura en móviles a h-[380px] para asegurar que quepa con el teclado abierto -->
-            <div id="editor-card" class="bg-white w-full max-w-sm h-[380px] sm:h-[450px] max-h-[85vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition">
+        <!-- Se ajustó a "items-start" y un padding top moderado para darle todo el espacio al teclado virtual -->
+        <div id="editor-modal" class="fixed inset-0 z-50 bg-black/50 flex items-start sm:items-center justify-center p-4 pt-4 sm:p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
+            <!-- Altura flexible con max-h-[85%] para que se encoja inteligentemente cuando aparezca el teclado -->
+            <div id="editor-card" class="bg-white w-full max-w-sm h-[450px] max-h-[85%] sm:max-h-[85vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition">
                 
                 <!-- Cabecera del Editor -->
-                <div class="flex items-center justify-between px-6 pb-4 pt-5 border-b border-gray-100 bg-white">
+                <div class="flex items-center justify-between px-6 pb-4 pt-5 border-b border-gray-100 bg-white shrink-0">
                     <button id="btn-close-editor" class="text-gray-500 font-medium active:scale-95 smooth-transition">Cancelar</button>
                     <div id="editor-title" class="font-bold text-lg text-gray-900">Nueva Nota</div>
                     <button id="btn-save-note" class="text-red-600 font-bold active:scale-95 smooth-transition disabled:opacity-40 disabled:scale-100">Guardar</button>
@@ -91,13 +91,13 @@
                 <!-- Área de Trabajo -->
                 <div class="flex-1 bg-gray-50 p-4 flex flex-col gap-3 overflow-hidden">
                     <!-- Botón Pegar -->
-                    <div class="flex justify-end">
+                    <div class="flex justify-end shrink-0">
                         <button id="btn-paste-text" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] active:bg-gray-50 active:scale-95 smooth-transition font-bold text-sm">
                             <i data-lucide="clipboard-paste" class="w-4 h-4 text-blue-600"></i> Pegar texto
                         </button>
                     </div>
                     
-                    <textarea id="note-textarea" placeholder="Pega el texto de WhatsApp aquí..." class="w-full flex-1 p-5 bg-white border border-gray-200 rounded-2xl shadow-sm resize-none focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 text-lg text-gray-800 placeholder-gray-400 leading-relaxed"></textarea>
+                    <textarea id="note-textarea" placeholder="Pega el texto de WhatsApp aquí..." class="w-full flex-1 min-h-[100px] p-5 bg-white border border-gray-200 rounded-2xl shadow-sm resize-none focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 text-lg text-gray-800 placeholder-gray-400 leading-relaxed"></textarea>
                 </div>
             </div>
         </div>
@@ -437,6 +437,7 @@
                 elTextarea.value = '';
                 document.getElementById('editor-title').textContent = 'Nueva Nota';
             }
+            // Dar auto focus sin usar la función "scrollIntoView" que causaba el salto
             elTextarea.focus();
             validateTextarea();
         };
@@ -511,13 +512,6 @@
         // Cerrar modales tocando el fondo borroso
         modalEditor.addEventListener('click', (e) => { if(e.target === modalEditor) closeEditor(); });
         modalPreview.addEventListener('click', (e) => { if(e.target === modalPreview) closePreview(); });
-        
-        // Ajuste para móviles: asegurar que el campo de texto sea visible cuando el teclado se abra
-        elTextarea.addEventListener('focus', () => {
-            setTimeout(() => {
-                elTextarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 300);
-        });
         
         document.getElementById('btn-close-preview').addEventListener('click', closePreview);
         document.getElementById('btn-preview-delete').addEventListener('click', () => { const id = previewNoteObj.id; closePreview(); setTimeout(()=>deleteNoteAction(id), 250); });
