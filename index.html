@@ -91,8 +91,15 @@
                     <button id="btn-save-note" class="text-red-600 font-bold active:scale-95 smooth-transition disabled:opacity-40 disabled:scale-100">Guardar</button>
                 </div>
                 
-                <div class="flex-1 bg-gray-50 p-4">
-                    <textarea id="note-textarea" placeholder="Pega el texto de WhatsApp aquí..." class="w-full h-full p-5 bg-white border border-gray-200 rounded-2xl shadow-sm resize-none focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 text-lg text-gray-800 placeholder-gray-400 leading-relaxed"></textarea>
+                <div class="flex-1 bg-gray-50 p-4 flex flex-col gap-3">
+                    <!-- Botón Pegar -->
+                    <div class="flex justify-end">
+                        <button id="btn-paste-text" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] active:bg-gray-50 active:scale-95 smooth-transition font-bold text-sm">
+                            <i data-lucide="clipboard-paste" class="w-4 h-4 text-blue-600"></i> Pegar texto
+                        </button>
+                    </div>
+                    
+                    <textarea id="note-textarea" placeholder="Pega el texto de WhatsApp aquí..." class="w-full flex-1 p-5 bg-white border border-gray-200 rounded-2xl shadow-sm resize-none focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 text-lg text-gray-800 placeholder-gray-400 leading-relaxed"></textarea>
                 </div>
             </div>
         </div>
@@ -176,6 +183,7 @@
         const elNotesList = document.getElementById('notes-list');
         const elTextarea = document.getElementById('note-textarea');
         const elBtnSaveNote = document.getElementById('btn-save-note');
+        const elBtnPasteText = document.getElementById('btn-paste-text');
 
         // --- INICIALIZAR ENCABEZADOS ---
         const initWeekdays = () => {
@@ -338,7 +346,7 @@
             }
         };
 
-        // --- ACCIONES ---
+        // --- ACCIONES DE NOTA ---
         const saveNoteAction = async () => {
             const content = elTextarea.value.trim();
             const dateKey = formatDateKey(selectedDate);
@@ -384,6 +392,26 @@
                         updateUI();
                     }
                 } catch (error) { console.error(error); }
+            }
+        };
+
+        const handlePasteClick = async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text) {
+                    // Si ya hay texto, damos un salto de línea antes de pegar, sino, simplemente reemplazamos.
+                    if (elTextarea.value) {
+                        elTextarea.value += '\n' + text;
+                    } else {
+                        elTextarea.value = text;
+                    }
+                    validateTextarea();
+                    // Auto-focus después de pegar
+                    elTextarea.focus();
+                }
+            } catch (err) {
+                console.error('Error accediendo al portapapeles: ', err);
+                alert('Tu navegador ha bloqueado el acceso al portapapeles. Por favor, mantén presionado el cuadro de texto y selecciona "Pegar".');
             }
         };
 
@@ -453,6 +481,7 @@
         
         document.getElementById('btn-close-editor').addEventListener('click', closeEditor);
         elBtnSaveNote.addEventListener('click', saveNoteAction);
+        elBtnPasteText.addEventListener('click', handlePasteClick);
         elTextarea.addEventListener('input', validateTextarea);
 
         // Cerrar modales tocando el fondo borroso
