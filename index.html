@@ -399,6 +399,9 @@
                         // El correo ya tenía datos. Forzamos inicio de sesión normal.
                         await signInWithRedirect(auth, googleProvider);
                         return; // Se detiene aquí porque la página recargará
+                    } else if (error.code === 'auth/unauthorized-domain') {
+                        console.error("Dominio no autorizado por Firebase:", window.location.hostname);
+                        alert(`Para probar el inicio de sesión aquí, autoriza este dominio en Firebase:\n\n${window.location.hostname}\n\n(En Firebase ve a Authentication -> Configuración -> Dominios autorizados)`);
                     } else {
                         console.error("Error al volver de Google:", error);
                     }
@@ -452,7 +455,11 @@
                 }
             } catch (error) {
                 console.error("Error iniciando redirección:", error);
-                alert("Hubo un problema al iniciar la conexión segura: " + error.message);
+                if (error.code === 'auth/unauthorized-domain') {
+                    alert(`Seguridad de Firebase:\n\nDebes agregar el siguiente dominio a tu consola de Firebase (Authentication > Configuración > Dominios autorizados):\n\n${window.location.hostname}`);
+                } else {
+                    alert("Hubo un problema al iniciar la conexión segura: " + error.message);
+                }
             }
         };
 
