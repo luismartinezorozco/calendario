@@ -56,7 +56,7 @@
         </div>
 
         <!-- ZONA DE NOTAS (Con Scroll) -->
-        <div class="flex-1 overflow-y-auto no-scrollbar relative z-10 pt-4 pb-24 px-4">
+        <div id="main-scroll-area" class="flex-1 overflow-y-auto no-scrollbar relative z-10 pt-4 pb-24 px-4">
             
             <!-- Separador Fecha Elegante -->
             <div class="flex items-center justify-between mb-4 sticky top-0 bg-[#f4f5f7]/90 backdrop-blur-md z-10 py-2">
@@ -180,6 +180,7 @@
         const elTextarea = document.getElementById('note-textarea');
         const elBtnSaveNote = document.getElementById('btn-save-note');
         const elBtnPasteText = document.getElementById('btn-paste-text');
+        const elScrollArea = document.getElementById('main-scroll-area'); // Area de scroll
 
         // --- INICIALIZAR ENCABEZADOS ---
         const initWeekdays = () => {
@@ -288,12 +289,10 @@
 
             selectedDayNotes.forEach(note => {
                 const noteDiv = document.createElement('div');
-                // Diseño de Tarjeta Flotante (Card)
                 noteDiv.className = "bg-white p-4 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-gray-100 flex items-start gap-4 active:scale-[0.98] smooth-transition cursor-pointer group";
                 
                 noteDiv.onclick = () => openPreview(note);
 
-                // Icono decorativo en la tarjeta
                 const iconContainer = document.createElement('div');
                 iconContainer.className = "w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0 text-red-500 group-hover:bg-red-100 smooth-transition";
                 iconContainer.innerHTML = '<i data-lucide="align-left" class="w-5 h-5"></i>';
@@ -395,14 +394,12 @@
             try {
                 const text = await navigator.clipboard.readText();
                 if (text) {
-                    // Si ya hay texto, damos un salto de línea antes de pegar, sino, simplemente reemplazamos.
                     if (elTextarea.value) {
                         elTextarea.value += '\n' + text;
                     } else {
                         elTextarea.value = text;
                     }
                     validateTextarea();
-                    // Auto-focus después de pegar
                     elTextarea.focus();
                 }
             } catch (err) {
@@ -411,13 +408,17 @@
             }
         };
 
-        // --- MODALES MODERNOS ---
+        // --- MODALES Y BLOQUEO DE SCROLL ---
         const modalEditor = document.getElementById('editor-modal');
         const cardEditor = document.getElementById('editor-card');
         const modalPreview = document.getElementById('preview-modal');
         const cardPreview = document.getElementById('preview-card');
 
         const openEditor = (note = null) => {
+            // BLOQUEAR SCROLL DE FONDO
+            elScrollArea.classList.remove('overflow-y-auto');
+            elScrollArea.classList.add('overflow-hidden');
+
             modalEditor.classList.remove('pointer-events-none');
             modalEditor.classList.remove('opacity-0');
             setTimeout(() => {
@@ -446,10 +447,18 @@
                 modalEditor.classList.add('pointer-events-none');
                 editingNoteId = null;
                 elTextarea.value = '';
+
+                // DESBLOQUEAR SCROLL DE FONDO
+                elScrollArea.classList.remove('overflow-hidden');
+                elScrollArea.classList.add('overflow-y-auto');
             }, 200);
         };
 
         const openPreview = (note) => {
+            // BLOQUEAR SCROLL DE FONDO
+            elScrollArea.classList.remove('overflow-y-auto');
+            elScrollArea.classList.add('overflow-hidden');
+
             previewNoteObj = note;
             document.getElementById('preview-text').textContent = note.content;
             
@@ -468,8 +477,21 @@
                 modalPreview.classList.add('opacity-0');
                 modalPreview.classList.add('pointer-events-none');
                 previewNoteObj = null;
+
+                // DESBLOQUEAR SCROLL DE FONDO
+                elScrollArea.classList.remove('overflow-hidden');
+                elScrollArea.classList.add('overflow-y-auto');
             }, 200);
         };
+
+        // EVITAR "RUBBER-BANDING" EN DISPOSITIVOS TÁCTILES CUANDO EL MODAL ESTÁ ABIERTO
+        const preventTouchScroll = (e) => {
+            if (e.target === modalEditor || e.target === modalPreview) {
+                e.preventDefault();
+            }
+        };
+        modalEditor.addEventListener('touchmove', preventTouchScroll, { passive: false });
+        modalPreview.addEventListener('touchmove', preventTouchScroll, { passive: false });
 
         const validateTextarea = () => { elBtnSaveNote.disabled = elTextarea.value.trim().length === 0; };
 
