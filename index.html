@@ -16,8 +16,6 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         /* Animaciones suaves */
         .smooth-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .slide-up { transform: translateY(100%); }
-        .slide-up.active { transform: translateY(0); }
     </style>
 </head>
 <body class="font-sans h-screen w-screen overflow-hidden flex justify-center items-center fixed inset-0 select-none">
@@ -77,21 +75,19 @@
             <i data-lucide="plus" class="w-7 h-7"></i>
         </button>
 
-        <!-- MODAL: EDITOR DE NOTAS (Slide Up Estilo Nativo) -->
-        <div id="editor-modal" class="fixed inset-0 z-50 flex flex-col justify-end bg-black/40 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2rem]">
-            <div id="editor-sheet" class="bg-white w-full h-[85vh] rounded-t-[2rem] shadow-2xl flex flex-col slide-up smooth-transition sm:h-[80%] sm:rounded-b-[2rem]">
-                <!-- Drag Handle -->
-                <div class="w-full flex justify-center pt-3 pb-1">
-                    <div class="w-12 h-1.5 bg-gray-300 rounded-full"></div>
-                </div>
+        <!-- MODAL: EDITOR DE NOTAS (Ventana Flotante Estilo iOS) -->
+        <div id="editor-modal" class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
+            <div id="editor-card" class="bg-white w-full max-w-sm h-[450px] max-h-[85vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition">
                 
-                <div class="flex items-center justify-between px-6 pb-4 pt-2 border-b border-gray-100">
+                <!-- Cabecera del Editor -->
+                <div class="flex items-center justify-between px-6 pb-4 pt-5 border-b border-gray-100 bg-white">
                     <button id="btn-close-editor" class="text-gray-500 font-medium active:scale-95 smooth-transition">Cancelar</button>
                     <div id="editor-title" class="font-bold text-lg text-gray-900">Nueva Nota</div>
                     <button id="btn-save-note" class="text-red-600 font-bold active:scale-95 smooth-transition disabled:opacity-40 disabled:scale-100">Guardar</button>
                 </div>
                 
-                <div class="flex-1 bg-gray-50 p-4 flex flex-col gap-3">
+                <!-- Área de Trabajo -->
+                <div class="flex-1 bg-gray-50 p-4 flex flex-col gap-3 overflow-hidden">
                     <!-- Botón Pegar -->
                     <div class="flex justify-end">
                         <button id="btn-paste-text" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] active:bg-gray-50 active:scale-95 smooth-transition font-bold text-sm">
@@ -417,14 +413,17 @@
 
         // --- MODALES MODERNOS ---
         const modalEditor = document.getElementById('editor-modal');
-        const sheetEditor = document.getElementById('editor-sheet');
+        const cardEditor = document.getElementById('editor-card');
         const modalPreview = document.getElementById('preview-modal');
         const cardPreview = document.getElementById('preview-card');
 
         const openEditor = (note = null) => {
             modalEditor.classList.remove('pointer-events-none');
             modalEditor.classList.remove('opacity-0');
-            setTimeout(() => sheetEditor.classList.add('active'), 10);
+            setTimeout(() => {
+                cardEditor.classList.remove('scale-95');
+                cardEditor.classList.add('scale-100');
+            }, 10);
             
             if (note) {
                 editingNoteId = note.id;
@@ -440,13 +439,14 @@
         };
 
         const closeEditor = () => {
-            sheetEditor.classList.remove('active');
+            cardEditor.classList.remove('scale-100');
+            cardEditor.classList.add('scale-95');
             setTimeout(() => {
                 modalEditor.classList.add('opacity-0');
                 modalEditor.classList.add('pointer-events-none');
                 editingNoteId = null;
                 elTextarea.value = '';
-            }, 300);
+            }, 200);
         };
 
         const openPreview = (note) => {
