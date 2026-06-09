@@ -11,8 +11,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Calendario">
     
-    <!-- Ícono para iOS (Base64 dinámico SVG - Cuadro rojo con 'C') -->
-    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2RjMjYyNiIvPjx0ZXh0IHk9IjcxIiB4PSIyNiIgZm9udC1zaXplPSI2NSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSIjZmZmZmZmIj5DPC90ZXh0Pjwvc3ZnPg==">
+    <!-- Favicon estándar para navegadores de PC -->
+    <link rel="icon" type="image/webp" href="https://www.image2url.com/r2/default/images/1781025563894-04a9fe33-94d2-406e-8dea-cae153818560.webp">
+    
+    <!-- Ícono para iOS (Pantalla de inicio de iPhone/iPad) -->
+    <link rel="apple-touch-icon" href="https://www.image2url.com/r2/default/images/1781025563894-04a9fe33-94d2-406e-8dea-cae153818560.webp">
     
     <!-- Manifest dinámico para Android/Chrome -->
     <link id="manifest-link" rel="manifest" href="">
@@ -25,9 +28,9 @@
             "background_color": "#f4f5f7",
             "theme_color": "#ffffff",
             "icons": [{
-                "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2RjMjYyNiIvPjx0ZXh0IHk9IjcxIiB4PSIyNiIgZm9udC1zaXplPSI2NSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSIjZmZmZmZmIj5DPC90ZXh0Pjwvc3ZnPg==",
-                "sizes": "192x192",
-                "type": "image/svg+xml",
+                "src": "https://www.image2url.com/r2/default/images/1781025563894-04a9fe33-94d2-406e-8dea-cae153818560.webp",
+                "sizes": "512x512",
+                "type": "image/webp",
                 "purpose": "any maskable"
             }]
         };
@@ -206,7 +209,8 @@
                 </button>
                 
                 <div class="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-500">
-                    <i data-lucide="download" class="w-8 h-8"></i>
+                    <!-- Mostramos tu nuevo ícono en el modal de instrucciones -->
+                    <img src="https://www.image2url.com/r2/default/images/1781025563894-04a9fe33-94d2-406e-8dea-cae153818560.webp" alt="App Icon" class="w-10 h-10 rounded-xl">
                 </div>
                 
                 <h3 class="text-xl font-black text-gray-900 mb-2">Instala la Aplicación</h3>
@@ -664,15 +668,14 @@
             }, 200);
         };
 
-        // --- ACCIONES DE NOTA Y COMPARTIR (CON PREVENCIÓN DE BOTÓN PEGADO) ---
+        // --- ACCIONES DE NOTA Y COMPARTIR ---
         const saveNoteAction = async () => {
             const content = elTextarea.value.trim().substring(0, 5000); 
             const dateKey = formatDateKey(selectedDate);
             if (!content) return;
 
-            // Prevenir doble clic y estado pegado en móviles
             elBtnSaveNote.disabled = true;
-            elBtnSaveNote.blur(); // Evita que se quede el estado "hundido" en iOS
+            elBtnSaveNote.blur(); 
             elBtnSaveNote.textContent = 'Guardando...';
 
             try {
@@ -702,10 +705,9 @@
                 alert("No se pudo guardar la nota. Verifica tu conexión.");
             } 
             finally { 
-                // Restauramos el botón después de la animación de cierre (200ms)
                 setTimeout(() => {
                     elBtnSaveNote.textContent = 'Guardar';
-                    validateTextarea(); // Vuelve a revisar si debe estar habilitado o no
+                    validateTextarea();
                 }, 250); 
             }
         };
