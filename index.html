@@ -13,29 +13,70 @@
     
     <!-- Favicons -->
     <link rel="icon" type="image/png" href="https://www.image2url.com/r2/default/images/1781026922099-d13a7475-7315-499f-9e3d-d3ed89fa7306.png">
-    <link rel="apple-touch-icon" href="https://www.image2url.com/r2/default/images/1781026922099-d13a7475-7315-499f-9e3d-d3ed89fa7306.png">
     
+    <!-- Ícono para iOS dinámico -->
+    <link id="apple-touch-icon" rel="apple-touch-icon" href="https://www.image2url.com/r2/default/images/1781026922099-d13a7475-7315-499f-9e3d-d3ed89fa7306.png">
     <!-- Manifest dinámico -->
     <link id="manifest-link" rel="manifest" href="">
+    
     <script>
-        const manifestJSON = {
-            "name": "Calendario de Eventos",
-            "short_name": "Calendario",
-            "start_url": window.location.pathname,
-            "display": "standalone",
-            "background_color": "#f4f5f7",
-            "theme_color": "#ffffff",
-            "icons": [{
-                "src": "https://www.image2url.com/r2/default/images/1781026922099-d13a7475-7315-499f-9e3d-d3ed89fa7306.png",
-                "sizes": "512x512",
-                "type": "image/png",
-                "purpose": "any maskable"
-            }]
-        };
-        const manifestBlob = new Blob([JSON.stringify(manifestJSON)], { type: 'application/manifest+json' });
-        document.addEventListener('DOMContentLoaded', () => {
+        const originalIcon = "https://www.image2url.com/r2/default/images/1781026922099-d13a7475-7315-499f-9e3d-d3ed89fa7306.png";
+
+        const updateManifestAndIcon = (iconUrl) => {
+            const manifestJSON = {
+                "name": "Calendario de Eventos",
+                "short_name": "Calendario",
+                "start_url": window.location.pathname,
+                "display": "standalone",
+                "background_color": "#f4f5f7",
+                "theme_color": "#ffffff",
+                "icons": [{
+                    "src": iconUrl,
+                    "sizes": "512x512",
+                    "type": "image/png",
+                    "purpose": "any maskable"
+                }]
+            };
+            const manifestBlob = new Blob([JSON.stringify(manifestJSON)], { type: 'application/manifest+json' });
             const link = document.getElementById('manifest-link');
             if (link) link.href = URL.createObjectURL(manifestBlob);
+            
+            const appleIcon = document.getElementById('apple-touch-icon');
+            if (appleIcon) appleIcon.href = iconUrl;
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializar con la imagen original como respaldo seguro
+            updateManifestAndIcon(originalIcon); 
+            
+            // Auto-recorte y optimización dinámica del ícono para iOS
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 512; 
+                    canvas.height = 512;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Fondo blanco estándar de iOS
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillRect(0, 0, 512, 512);
+                    
+                    // Aumentar el tamaño un 65% para eliminar el padding transparente original
+                    const scale = 1.65; 
+                    const size = 512 * scale;
+                    const offset = (512 - size) / 2;
+                    
+                    ctx.drawImage(img, offset, offset, size, size);
+                    
+                    const optimizedIcon = canvas.toDataURL('image/png');
+                    updateManifestAndIcon(optimizedIcon);
+                } catch(e) {
+                    console.warn("Optimización dinámica de ícono bloqueada por CORS del servidor de imágenes.");
+                }
+            };
+            img.src = originalIcon;
         });
     </script>
 
@@ -278,9 +319,12 @@
         <div id="install-modal" class="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
             <div id="install-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition p-6 text-center relative">
                 <button id="btn-close-install" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button>
-                <div class="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-500">
-                    <img src="https://www.image2url.com/r2/default/images/1781026922099-d13a7475-7315-499f-9e3d-d3ed89fa7306.png" alt="App Icon" class="w-10 h-10 rounded-xl bg-white p-0.5 shadow-sm">
+                
+                <!-- ÍCONO MEJORADO PARA EL MODAL (Redondeado Apple y Escala 1.6x) -->
+                <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md border border-gray-100 overflow-hidden relative">
+                    <img src="https://www.image2url.com/r2/default/images/1781026922099-d13a7475-7315-499f-9e3d-d3ed89fa7306.png" alt="App Icon" class="w-full h-full object-cover transform scale-[1.6]">
                 </div>
+                
                 <h3 class="text-xl font-black text-gray-900 mb-2">Instala la Aplicación</h3>
                 <p class="text-sm text-gray-600 mb-6 leading-relaxed">Para usar este calendario sin conexión y directamente desde tu pantalla de inicio, sigue este paso:</p>
                 <div class="text-left bg-gray-50 p-4 rounded-xl mb-4 border border-gray-100">
@@ -356,7 +400,7 @@
 
         // --- VARIABLES DE DOM Y ESTADO ---
         let user = null;
-        let activeWorkspaceUid = null; 
+        let activeWorkspaceUid = localStorage.getItem('collabWorkspace') || null; 
         let notes = [];
         let currentDate = new Date();
         let selectedDate = new Date();
@@ -606,7 +650,6 @@
             }
         };
 
-        // --- FLUJO INICIAL: AQUÍ SE ARREGLÓ EL BUG DE COLABORADOR FALSO ---
         const initDataFlow = async () => {
             initWeekdays(); updateUI();
             if (!auth || !db || isLocalFile) return;
