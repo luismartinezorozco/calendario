@@ -242,7 +242,7 @@
                     <button id="btn-preview-share" class="w-full py-3 text-blue-700 font-bold bg-blue-50 border border-blue-100 hover:bg-blue-100 rounded-xl smooth-transition active:scale-95 flex items-center justify-center gap-2">
                         <i data-lucide="share-2" class="w-5 h-5"></i> Compartir Evento
                     </button>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div id="preview-actions" class="grid grid-cols-2 gap-3">
                         <button id="btn-preview-delete" class="py-3.5 text-red-600 font-bold bg-white border border-gray-200 rounded-xl smooth-transition active:bg-red-50 active:scale-95 flex items-center justify-center gap-2">
                             <i data-lucide="trash-2" class="w-4 h-4"></i> Borrar
                         </button>
@@ -403,11 +403,18 @@
             const picker = document.getElementById('month-picker');
             if (picker) picker.value = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             
+            // Detectar si el usuario está en "Modo Colaborador" (viendo el calendario de otra persona)
             const isCollab = activeWorkspaceUid && user && activeWorkspaceUid !== user.uid;
             const badge = document.getElementById('collab-badge');
             const leaveBtn = document.getElementById('btn-menu-leave');
+            const btnAddEvent = document.getElementById('btn-add-event');
+            const previewActions = document.getElementById('preview-actions');
+
+            // Mostrar u ocultar UI según permisos
             if (badge) badge.style.display = isCollab ? 'block' : 'none';
             if (leaveBtn) leaveBtn.style.display = isCollab ? 'flex' : 'none';
+            if (btnAddEvent) btnAddEvent.style.display = isCollab ? 'none' : 'flex'; // Oculta el botón (+) si es colaborador
+            if (previewActions) previewActions.style.display = isCollab ? 'none' : 'grid'; // Oculta Editar y Borrar si es colaborador
 
             renderCalendar();
             renderBanner();
@@ -716,6 +723,10 @@
             setTimeout(() => { modalJoinCode?.classList.add('opacity-0', 'pointer-events-none'); document.getElementById('main-scroll-area')?.classList.replace('overflow-hidden', 'overflow-y-auto'); }, 200);
         };
         const openEditor = (note = null) => { 
+            // Si es colaborador y por algún motivo el evento se disparó, ignorar
+            const isCollab = activeWorkspaceUid && user && activeWorkspaceUid !== user.uid;
+            if(isCollab) return; 
+
             document.getElementById('main-scroll-area')?.classList.replace('overflow-y-auto', 'overflow-hidden'); 
             modalEditor?.classList.remove('pointer-events-none', 'opacity-0'); 
             setTimeout(() => cardEditor?.classList.replace('scale-95', 'scale-100'), 10); 
