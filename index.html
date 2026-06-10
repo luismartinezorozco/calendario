@@ -529,7 +529,8 @@
             const code = user.uid.substring(0,6).toUpperCase();
             
             try {
-                await setDoc(doc(db, 'artifacts', targetAppId, 'public', 'shares', code), {
+                // CORRECCIÓN: Usar siempre la ruta pública estricta del entorno
+                await setDoc(doc(db, 'artifacts', targetAppId, 'public', 'data', 'shares', code), {
                     targetUid: user.uid,
                     createdAt: Date.now()
                 });
@@ -540,12 +541,14 @@
                 closeMenu();
                 setTimeout(() => {
                     document.getElementById('main-scroll-area')?.classList.replace('overflow-y-auto', 'overflow-hidden');
-                    modalShareCode?.classList.remove('pointer-events-none', 'opacity-0');
-                    setTimeout(() => cardShareCode?.classList.replace('scale-95', 'scale-100'), 10);
+                    const mShareCode = document.getElementById('share-code-modal');
+                    const cShareCode = document.getElementById('share-code-card');
+                    mShareCode?.classList.remove('pointer-events-none', 'opacity-0');
+                    setTimeout(() => cShareCode?.classList.replace('scale-95', 'scale-100'), 10);
                 }, 250);
             } catch (error) {
                 console.error("Error generando código:", error);
-                if (error.code === 'permission-denied') alert("Error de Firebase: Tus reglas bloquean la creación de códigos. Modifícalas para permitir escritura pública.");
+                alert("Error generando código: " + error.message);
             }
         };
 
@@ -560,7 +563,8 @@
             btn.disabled = true; btn.innerHTML = "Buscando...";
 
             try {
-                const docRef = doc(db, 'artifacts', targetAppId, 'public', 'shares', input);
+                // CORRECCIÓN: Usar siempre la ruta pública estricta del entorno
+                const docRef = doc(db, 'artifacts', targetAppId, 'public', 'data', 'shares', input);
                 const snap = await getDoc(docRef);
                 
                 if (snap.exists()) {
@@ -576,8 +580,7 @@
                 }
             } catch (error) {
                 console.error("Error uniéndose:", error);
-                if (error.code === 'permission-denied') alert("Tus reglas de Firebase bloquean la búsqueda de códigos compartidos.");
-                else alert("Hubo un error de conexión.");
+                alert("Hubo un error de conexión: " + error.message);
             } finally {
                 btn.disabled = false; btn.innerHTML = `Conectar <i data-lucide="arrow-right" class="w-5 h-5"></i>`; 
                 if (window.lucide) lucide.createIcons();
@@ -703,8 +706,10 @@
             setTimeout(() => { modalMenu?.classList.add('opacity-0', 'pointer-events-none'); document.getElementById('main-scroll-area')?.classList.replace('overflow-hidden', 'overflow-y-auto'); }, 200);
         };
         const closeShareModal = () => {
-            cardShareCode?.classList.replace('scale-100', 'scale-95');
-            setTimeout(() => { modalShareCode?.classList.add('opacity-0', 'pointer-events-none'); document.getElementById('main-scroll-area')?.classList.replace('overflow-hidden', 'overflow-y-auto'); }, 200);
+            const mShareCode = document.getElementById('share-code-modal');
+            const cShareCode = document.getElementById('share-code-card');
+            cShareCode?.classList.replace('scale-100', 'scale-95');
+            setTimeout(() => { mShareCode?.classList.add('opacity-0', 'pointer-events-none'); document.getElementById('main-scroll-area')?.classList.replace('overflow-hidden', 'overflow-y-auto'); }, 200);
         };
         const closeJoinModal = () => {
             cardJoinCode?.classList.replace('scale-100', 'scale-95');
@@ -883,8 +888,9 @@
             }
         };
 
+        const mShareCode = document.getElementById('share-code-modal');
         bindModalBg(modalMenu, closeMenu);
-        bindModalBg(modalShareCode, closeShareModal);
+        bindModalBg(mShareCode, closeShareModal);
         bindModalBg(modalJoinCode, closeJoinModal);
         bindModalBg(modalEditor, closeEditor);
         bindModalBg(modalPreview, closePreview);
