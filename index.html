@@ -5,19 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Calendario Eventos</title>
     
-    <!-- Meta tags PWA (iOS & Android) -->
+    <!-- Meta tags PWA -->
     <meta name="theme-color" content="#ffffff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Calendario">
     
-    <!-- Favicon estándar para navegadores de PC -->
+    <!-- Favicons -->
     <link rel="icon" type="image/png" href="https://www.image2url.com/r2/default/images/1781026922099-d13a7475-7315-499f-9e3d-d3ed89fa7306.png">
-    
-    <!-- Ícono para iOS (Pantalla de inicio de iPhone/iPad) -->
     <link rel="apple-touch-icon" href="https://www.image2url.com/r2/default/images/1781026922099-d13a7475-7315-499f-9e3d-d3ed89fa7306.png">
     
-    <!-- Manifest dinámico para Android/Chrome -->
+    <!-- Manifest dinámico -->
     <link id="manifest-link" rel="manifest" href="">
     <script>
         const manifestJSON = {
@@ -36,21 +34,18 @@
         };
         const manifestBlob = new Blob([JSON.stringify(manifestJSON)], { type: 'application/manifest+json' });
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
+            const link = document.getElementById('manifest-link');
+            if (link) link.href = URL.createObjectURL(manifestBlob);
         });
     </script>
 
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS & Lucide Icons -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* Prevenir scroll no deseado, efecto "overscroll" nativo */
         body { overscroll-behavior-y: none; background-color: #e5e7eb; }
-        /* Ocultar scrollbar pero permitir scroll fluido */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        /* Animaciones suaves */
         .smooth-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     </style>
 </head>
@@ -62,65 +57,55 @@
         <!-- HEADER BLANCO CURVO -->
         <div class="bg-white rounded-b-[2rem] shadow-[0_4px_20px_rgba(0,0,0,0.03)] z-20 relative pb-2">
             
-            <!-- Barra Superior (Mes, Hoy, Flechas, Sync, Instalar) -->
+            <!-- Barra Superior -->
             <div class="flex items-center justify-between pt-6 pb-2 px-5">
                 
                 <!-- TÍTULO INTERACTIVO CON SELECTOR DE FECHA NATIVO -->
-                <div class="flex items-center gap-1 relative cursor-pointer group">
-                    <h2 id="month-title" class="text-2xl font-black text-gray-800 capitalize tracking-tight group-hover:text-red-600 smooth-transition">Mes, Año</h2>
-                    <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 group-hover:text-red-600 smooth-transition"></i>
-                    <!-- Input nativo invisible encima del título -->
-                    <input type="month" id="month-picker" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="Seleccionar mes">
+                <div class="flex flex-col">
+                    <div class="flex items-center gap-1 relative cursor-pointer group">
+                        <h2 id="month-title" class="text-2xl font-black text-gray-800 capitalize tracking-tight group-hover:text-red-600 smooth-transition">Mes, Año</h2>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 group-hover:text-red-600 smooth-transition"></i>
+                        <input type="month" id="month-picker" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="Seleccionar mes">
+                    </div>
+                    <!-- Badge de Colaborador -->
+                    <span id="collab-badge" class="hidden text-[10px] font-bold text-red-500 uppercase tracking-widest mt-0.5">🗓️ Modo Colaborador</span>
                 </div>
                 
                 <div class="flex items-center gap-1">
                     <!-- Botón Instalar App (PWA) - Oculto por defecto -->
-                    <button id="btn-install" class="hidden p-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-full smooth-transition active:scale-95" title="Instalar como App">
+                    <button id="btn-install-header" class="hidden p-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-full smooth-transition active:scale-95" title="Instalar como App">
                         <i data-lucide="download" class="w-5 h-5"></i>
                     </button>
 
-                    <!-- Botón de Respaldo Nube -->
-                    <button id="btn-sync" class="mr-2 p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-full smooth-transition active:scale-95 relative" title="Respaldar en la nube">
+                    <button id="btn-sync" class="mr-1 p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-full smooth-transition active:scale-95 relative" title="Respaldar en la nube">
                         <i id="sync-icon" data-lucide="cloud-off" class="w-5 h-5 text-gray-500"></i>
                         <span id="sync-badge" class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
                     </button>
 
-                    <button id="btn-today" class="mr-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-full smooth-transition active:scale-95">
+                    <button id="btn-today" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-full smooth-transition active:scale-95">
                         HOY
                     </button>
-                    <button id="btn-prev-month" class="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full smooth-transition active:scale-95">
-                        <i data-lucide="chevron-left" class="w-6 h-6"></i>
-                    </button>
-                    <button id="btn-next-month" class="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full smooth-transition active:scale-95">
-                        <i data-lucide="chevron-right" class="w-6 h-6"></i>
+                    
+                    <!-- Botón Menú Hamburguesa -->
+                    <button id="btn-open-menu" class="ml-1 p-1.5 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-full smooth-transition active:scale-95">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
                     </button>
                 </div>
             </div>
 
             <!-- Días de la semana header -->
-            <div class="grid grid-cols-7 px-4 pt-2" id="weekdays-header">
-                <!-- Se llena con JS -->
-            </div>
-
+            <div class="grid grid-cols-7 px-4 pt-2" id="weekdays-header"></div>
             <!-- Grid del calendario -->
-            <div id="calendar-grid" class="grid grid-cols-7 gap-y-1 px-4 pb-4 mt-2">
-                <!-- Se llena con JS -->
-            </div>
+            <div id="calendar-grid" class="grid grid-cols-7 gap-y-1 px-4 pb-4 mt-2"></div>
         </div>
 
         <!-- ZONA DE NOTAS (Con Scroll) -->
         <div id="main-scroll-area" class="flex-1 overflow-y-auto no-scrollbar relative z-10 pt-4 pb-24 px-4">
-            
-            <!-- Separador Fecha Elegante -->
             <div class="flex items-center justify-between mb-4 sticky top-0 bg-[#f4f5f7]/90 backdrop-blur-md z-10 py-2">
                 <h3 id="date-banner" class="text-lg font-black text-gray-800 tracking-tight">Fecha Actual</h3>
                 <span id="notes-count" class="text-xs font-bold bg-gray-200 text-gray-600 px-2.5 py-1 rounded-full">0 eventos</span>
             </div>
-
-            <!-- Lista de Notas -->
-            <div id="notes-list" class="flex flex-col gap-3">
-                <!-- Se llena con JS -->
-            </div>
+            <div id="notes-list" class="flex flex-col gap-3"></div>
         </div>
 
         <!-- BOTÓN DE ACCIÓN FLOTANTE (FAB) -->
@@ -128,27 +113,119 @@
             <i data-lucide="plus" class="w-7 h-7"></i>
         </button>
 
-        <!-- MODAL: EDITOR DE NOTAS (Con altura inteligente para Teclado) -->
+        <!-- ================= MODALES ================= -->
+
+        <!-- MODAL: MENÚ PRINCIPAL -->
+        <div id="menu-modal" class="fixed inset-0 z-50 bg-black/50 flex items-start pt-20 sm:items-center justify-center p-4 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
+            <div id="menu-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition p-2">
+                <div class="flex items-center justify-between px-4 pt-3 pb-2 border-b border-gray-100">
+                    <h3 class="font-bold text-gray-900 text-lg">Menú Principal</h3>
+                    <button id="btn-close-menu" class="p-2 text-gray-400 hover:text-gray-600 bg-gray-50 rounded-full active:scale-95">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div class="flex flex-col p-2 gap-1">
+                    
+                    <button id="btn-menu-share" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-left smooth-transition active:bg-gray-100">
+                        <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="users" class="w-5 h-5"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-bold text-gray-800 text-sm">Compartir Calendario</p>
+                            <p class="text-xs text-gray-500">Genera un código para tu equipo</p>
+                        </div>
+                    </button>
+
+                    <button id="btn-menu-join" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-left smooth-transition active:bg-gray-100">
+                        <div class="w-10 h-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="key" class="w-5 h-5"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-bold text-gray-800 text-sm">Ingresar Código</p>
+                            <p class="text-xs text-gray-500">Únete al calendario de tu empresa</p>
+                        </div>
+                    </button>
+
+                    <button id="btn-menu-leave" class="hidden w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-left smooth-transition active:bg-gray-100">
+                        <div class="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="log-out" class="w-5 h-5"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-bold text-gray-800 text-sm">Desconectar de Equipo</p>
+                            <p class="text-xs text-gray-500">Volver a tu calendario personal</p>
+                        </div>
+                    </button>
+
+                    <div class="h-px bg-gray-100 my-1 mx-2"></div>
+
+                    <!-- Botón: Instalar App PWA -->
+                    <button id="btn-install" class="hidden w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-left smooth-transition active:bg-gray-100">
+                        <div class="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="download" class="w-5 h-5"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-bold text-gray-800 text-sm">Instalar Aplicación</p>
+                            <p class="text-xs text-gray-500">Agrega el calendario a tu inicio</p>
+                        </div>
+                    </button>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: MOSTRAR CÓDIGO (DUEÑO) -->
+        <div id="share-code-modal" class="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
+            <div id="share-code-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition p-6 text-center relative">
+                <button id="btn-close-share-code" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button>
+                <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-500">
+                    <i data-lucide="share-2" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-xl font-black text-gray-900 mb-2">Tu Código de Equipo</h3>
+                <p class="text-sm text-gray-600 mb-4 leading-relaxed">
+                    Comparte este código con tus colaboradores. Al ingresarlo, verán y podrán editar este calendario.
+                </p>
+                <div class="bg-gray-100 rounded-xl p-4 mb-6 select-all cursor-pointer border border-gray-200 border-dashed">
+                    <p id="display-share-code" class="text-4xl font-black text-gray-800 tracking-[0.2em] text-center">------</p>
+                </div>
+                <button id="btn-copy-code" class="w-full py-3 bg-gray-900 text-white font-bold rounded-xl active:scale-95 smooth-transition flex items-center justify-center gap-2">
+                    <i data-lucide="copy" class="w-5 h-5"></i> Copiar Código
+                </button>
+            </div>
+        </div>
+
+        <!-- MODAL: INGRESAR CÓDIGO (COLABORADOR) -->
+        <div id="join-code-modal" class="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
+            <div id="join-code-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition p-6 text-center relative">
+                <button id="btn-close-join-code" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button>
+                <div class="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-500">
+                    <i data-lucide="log-in" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-xl font-black text-gray-900 mb-2">Unirse a un Equipo</h3>
+                <p class="text-sm text-gray-600 mb-4 leading-relaxed">
+                    Ingresa el código de 6 caracteres que te proporcionó el administrador del calendario.
+                </p>
+                <input type="text" id="input-join-code" maxlength="6" placeholder="EJ: A1B2C3" class="w-full text-center text-3xl font-black tracking-[0.2em] uppercase bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 smooth-transition text-gray-800">
+                <button id="btn-submit-join" class="w-full py-3 bg-orange-600 text-white font-bold rounded-xl active:scale-95 smooth-transition flex items-center justify-center gap-2">
+                    Conectar <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- MODAL: EDITOR DE NOTAS -->
         <div id="editor-modal" class="fixed inset-0 z-50 bg-black/50 flex items-start pt-10 sm:items-center justify-center p-4 sm:p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
             <div id="editor-card" class="bg-white w-full max-w-sm h-[380px] sm:h-[450px] max-h-[85vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition">
-                
-                <!-- Cabecera del Editor -->
                 <div class="flex items-center justify-between px-6 pb-4 pt-5 border-b border-gray-100 bg-white shrink-0">
                     <button id="btn-close-editor" class="text-gray-500 font-medium active:scale-95 smooth-transition">Cancelar</button>
                     <div id="editor-title" class="font-bold text-lg text-gray-900">Nueva Nota</div>
                     <button id="btn-save-note" class="text-red-600 font-bold active:scale-95 smooth-transition disabled:opacity-40 disabled:scale-100">Guardar</button>
                 </div>
-                
-                <!-- Área de Trabajo -->
                 <div class="flex-1 bg-gray-50 p-4 flex flex-col gap-3 overflow-hidden">
                     <div class="flex justify-end shrink-0">
                         <button id="btn-paste-text" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] active:bg-gray-50 active:scale-95 smooth-transition font-bold text-sm">
                             <i data-lucide="clipboard-paste" class="w-4 h-4 text-blue-600"></i> Pegar texto
                         </button>
                     </div>
-                    
-                    <!-- maxlength de 5000 para prevenir desbordamiento malicioso de memoria/cuota de Base de datos -->
-                    <textarea id="note-textarea" maxlength="5000" placeholder="Pega el texto de WhatsApp aquí..." class="w-full flex-1 p-5 bg-white border border-gray-200 rounded-2xl shadow-sm resize-none focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 text-lg text-gray-800 placeholder-gray-400 leading-relaxed"></textarea>
+                    <textarea id="note-textarea" maxlength="5000" placeholder="Pega el texto aquí..." class="w-full flex-1 p-5 bg-white border border-gray-200 rounded-2xl shadow-sm resize-none focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 text-lg text-gray-800 placeholder-gray-400 leading-relaxed"></textarea>
                 </div>
             </div>
         </div>
@@ -158,17 +235,13 @@
             <div id="preview-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition">
                 <div class="p-6 max-h-[60vh] overflow-y-auto no-scrollbar relative">
                     <div class="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-white to-transparent pointer-events-none"></div>
-                    <!-- renderizado seguro usando textContent protegido por JS puro -->
                     <p id="preview-text" class="text-gray-800 text-[15px] sm:text-base whitespace-pre-wrap font-medium leading-relaxed pt-2"></p>
                     <div class="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
                 </div>
-                
                 <div class="bg-gray-50 p-4 flex flex-col gap-3 border-t border-gray-100">
-                    <!-- BOTÓN: Compartir Evento -->
                     <button id="btn-preview-share" class="w-full py-3 text-blue-700 font-bold bg-blue-50 border border-blue-100 hover:bg-blue-100 rounded-xl smooth-transition active:scale-95 flex items-center justify-center gap-2">
                         <i data-lucide="share-2" class="w-5 h-5"></i> Compartir Evento
                     </button>
-                    
                     <div class="grid grid-cols-2 gap-3">
                         <button id="btn-preview-delete" class="py-3.5 text-red-600 font-bold bg-white border border-gray-200 rounded-xl smooth-transition active:bg-red-50 active:scale-95 flex items-center justify-center gap-2">
                             <i data-lucide="trash-2" class="w-4 h-4"></i> Borrar
@@ -178,7 +251,6 @@
                         </button>
                     </div>
                 </div>
-                
                 <button id="btn-close-preview" class="absolute top-4 right-4 w-8 h-8 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center smooth-transition active:bg-gray-200 active:scale-90">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
@@ -188,19 +260,14 @@
         <!-- MODAL: SINCRONIZACIÓN GOOGLE -->
         <div id="sync-modal" class="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
             <div id="sync-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition p-6 text-center relative">
-                <button id="btn-close-sync" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-                
+                <button id="btn-close-sync" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button>
                 <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-500">
                     <i data-lucide="cloud" class="w-8 h-8"></i>
                 </div>
-                
                 <h3 id="sync-title" class="text-xl font-black text-gray-900 mb-2">Respaldar Calendario</h3>
                 <p id="sync-desc" class="text-sm text-gray-600 mb-6 leading-relaxed">
                     Tus eventos están guardados solo en este dispositivo. Inicia sesión con Google para respaldarlos en la nube y verlos en otros celulares o tablets.
                 </p>
-                
                 <button id="btn-google-login" class="w-full flex items-center justify-center gap-3 py-3.5 bg-gray-900 text-white font-bold rounded-xl active:scale-95 smooth-transition">
                     <i data-lucide="user-check" class="w-5 h-5"></i> Iniciar con Google
                 </button>
@@ -210,31 +277,18 @@
         <!-- MODAL: INSTALAR APP (PWA) -->
         <div id="install-modal" class="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
             <div id="install-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition p-6 text-center relative">
-                <button id="btn-close-install" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-                
+                <button id="btn-close-install" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button>
                 <div class="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-500">
-                    <!-- Mostramos tu nuevo ícono PNG en el modal de instrucciones. Le agregué un fondo blanco y padding para que resalte. -->
                     <img src="https://www.image2url.com/r2/default/images/1781026922099-d13a7475-7315-499f-9e3d-d3ed89fa7306.png" alt="App Icon" class="w-10 h-10 rounded-xl bg-white p-0.5 shadow-sm">
                 </div>
-                
                 <h3 class="text-xl font-black text-gray-900 mb-2">Instala la Aplicación</h3>
-                <p class="text-sm text-gray-600 mb-6 leading-relaxed">
-                    Para usar este calendario sin conexión y directamente desde tu pantalla de inicio, sigue este paso:
-                </p>
-
+                <p class="text-sm text-gray-600 mb-6 leading-relaxed">Para usar este calendario sin conexión y directamente desde tu pantalla de inicio, sigue este paso:</p>
                 <div class="text-left bg-gray-50 p-4 rounded-xl mb-4 border border-gray-100">
-                    <h4 class="font-bold text-gray-800 mb-1 flex items-center gap-2">
-                        <i data-lucide="apple" class="w-4 h-4 text-gray-600"></i> En tu iPhone o iPad:
-                    </h4>
-                    <p class="text-sm text-gray-600 mt-2">1. Toca el ícono de <b>Compartir</b> <span class="inline-block border border-gray-300 bg-white rounded px-1.5 shadow-sm">↑</span> en la barra de tu navegador.</p>
+                    <h4 class="font-bold text-gray-800 mb-1 flex items-center gap-2"><i data-lucide="apple" class="w-4 h-4 text-gray-600"></i> En tu iPhone o iPad:</h4>
+                    <p class="text-sm text-gray-600 mt-2">1. Toca el ícono de <b>Compartir</b> <span class="inline-block border border-gray-300 bg-white rounded px-1.5 shadow-sm">↑</span> en la barra.</p>
                     <p class="text-sm text-gray-600 mt-2">2. Selecciona <b>"Agregar a inicio"</b> <span class="inline-block border border-gray-300 bg-white rounded px-1.5 shadow-sm">+</span>.</p>
                 </div>
-                
-                <button id="btn-got-it" class="w-full mt-2 py-3 bg-gray-900 text-white font-bold rounded-xl active:scale-95 smooth-transition">
-                    Entendido
-                </button>
+                <button id="btn-got-it" class="w-full mt-2 py-3 bg-gray-900 text-white font-bold rounded-xl active:scale-95 smooth-transition">Entendido</button>
             </div>
         </div>
 
@@ -244,7 +298,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, linkWithPopup, signInWithPopup, signOut, signInWithCredential } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, setDoc, getDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURACIÓN DE FIREBASE ---
         const firebaseConfig = {
@@ -261,18 +315,9 @@
             app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
-            
-            // HABILITAR PERSISTENCIA OFFLINE LOCAL
-            enableIndexedDbPersistence(db).catch((err) => {
-                if (err.code == 'failed-precondition') {
-                    console.warn("Múltiples pestañas abiertas. La persistencia offline solo funciona en una a la vez.");
-                } else if (err.code == 'unimplemented') {
-                    console.warn("Tu navegador no soporta el modo offline.");
-                }
-            });
-            
-        } catch (error) {
-            console.error("No se pudo conectar a Firebase:", error);
+            enableIndexedDbPersistence(db).catch(console.warn);
+        } catch (error) { 
+            console.error("Error Firebase:", error); 
         }
 
         const googleProvider = new GoogleAuthProvider();
@@ -285,14 +330,9 @@
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
-        // --- REGISTRO DEL SERVICE WORKER (CARGA 100% OFFLINE) ---
         if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').then((registration) => {
-                    console.log('[PWA] ServiceWorker registrado con éxito. App lista para modo offline.');
-                }).catch((err) => {
-                    console.log('[PWA] Aviso: El ServiceWorker no está activo aún porque falta el archivo sw.js en tu servidor.', err);
-                });
+                navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW no activo', err));
             });
         }
 
@@ -302,33 +342,21 @@
         const DAY_NAMES_SHORT = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
         const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
-        const getFirstDayOfMonth = (year, month) => {
-            const day = new Date(year, month, 1).getDay();
-            return day === 0 ? 6 : day - 1; 
-        };
+        const getFirstDayOfMonth = (year, month) => { const day = new Date(year, month, 1).getDay(); return day === 0 ? 6 : day - 1; };
         const isSameDay = (date1, date2) => date1.getFullYear() === date2.getFullYear() && date1.getMonth() === date2.getMonth() && date1.getDate() === date2.getDate();
         const formatDateKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-
+        
         const copyToClipboard = (text) => {
-            if (navigator.clipboard && window.isSecureContext) {
-                return navigator.clipboard.writeText(text);
-            } else {
-                let textArea = document.createElement("textarea");
-                textArea.value = text;
-                textArea.style.position = "fixed";
-                textArea.style.left = "-999999px";
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                return new Promise((res, rej) => {
-                    document.execCommand('copy') ? res() : rej();
-                    textArea.remove();
-                });
-            }
+            if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+            let textArea = document.createElement("textarea"); textArea.value = text;
+            textArea.style.position = "fixed"; textArea.style.left = "-999999px";
+            document.body.appendChild(textArea); textArea.focus(); textArea.select();
+            return new Promise((res, rej) => { document.execCommand('copy') ? res() : rej(); textArea.remove(); });
         };
 
-        // --- ESTADO ---
+        // --- VARIABLES DE DOM Y ESTADO ---
         let user = null;
+        let activeWorkspaceUid = localStorage.getItem('collabWorkspace') || null; 
         let notes = [];
         let currentDate = new Date();
         let selectedDate = new Date();
@@ -336,18 +364,12 @@
         let previewNoteObj = null;
         let unsubscribeSnapshot = null;
 
-        // --- ELEMENTOS ---
-        const elMonthTitle = document.getElementById('month-title');
-        const elMonthPicker = document.getElementById('month-picker');
-        const elCalendarGrid = document.getElementById('calendar-grid');
-        const elDateBanner = document.getElementById('date-banner');
-        const elNotesCount = document.getElementById('notes-count');
-        const elNotesList = document.getElementById('notes-list');
-        const elTextarea = document.getElementById('note-textarea');
-        const elBtnSaveNote = document.getElementById('btn-save-note');
-        const elBtnPasteText = document.getElementById('btn-paste-text');
-        const elScrollArea = document.getElementById('main-scroll-area');
-
+        const modalMenu = document.getElementById('menu-modal');
+        const cardMenu = document.getElementById('menu-card');
+        const modalShareCode = document.getElementById('share-code-modal');
+        const cardShareCode = document.getElementById('share-code-card');
+        const modalJoinCode = document.getElementById('join-code-modal');
+        const cardJoinCode = document.getElementById('join-code-card');
         const modalEditor = document.getElementById('editor-modal');
         const cardEditor = document.getElementById('editor-card');
         const modalPreview = document.getElementById('preview-modal');
@@ -357,392 +379,286 @@
         const modalInstall = document.getElementById('install-modal');
         const cardInstall = document.getElementById('install-card');
 
-        // --- RENDERIZADO DEL CALENDARIO ---
+        // Función para enlazado seguro de eventos
+        const bindEvent = (id, event, handler) => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener(event, handler);
+        };
+
         const initWeekdays = () => {
             const header = document.getElementById('weekdays-header');
+            if(!header) return;
             DAY_NAMES_SHORT.forEach(day => {
-                const div = document.createElement('div');
-                div.className = "text-center text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2";
+                const div = document.createElement('div'); 
+                div.className = "text-center text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2"; 
                 div.textContent = day; 
                 header.appendChild(div);
             });
         };
 
         const updateUI = () => {
+            const titleEl = document.getElementById('month-title');
+            if(titleEl) titleEl.textContent = `${MONTH_NAMES[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+            
+            const picker = document.getElementById('month-picker');
+            if (picker) picker.value = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+            
+            const isCollab = activeWorkspaceUid && user && activeWorkspaceUid !== user.uid;
+            const badge = document.getElementById('collab-badge');
+            const leaveBtn = document.getElementById('btn-menu-leave');
+            if (badge) badge.style.display = isCollab ? 'block' : 'none';
+            if (leaveBtn) leaveBtn.style.display = isCollab ? 'flex' : 'none';
+
             renderCalendar();
             renderBanner();
             renderNotes();
-            updateAuthUI();
+            
+            const btnSync = document.getElementById('btn-sync');
+            if (btnSync) {
+                if (user && !user.isAnonymous) {
+                    btnSync.innerHTML = `<i data-lucide="cloud-check" class="w-5 h-5 text-green-600"></i><span id="sync-badge" class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>`;
+                } else {
+                    btnSync.innerHTML = `<i data-lucide="cloud-off" class="w-5 h-5 text-gray-500"></i><span id="sync-badge" class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>`;
+                }
+            }
             if (window.lucide) lucide.createIcons();
         };
 
-        const updateAuthUI = () => {
-            const btnSync = document.getElementById('btn-sync');
-            if (user && !user.isAnonymous) {
-                btnSync.innerHTML = `
-                    <i data-lucide="cloud-check" class="w-5 h-5 text-green-600"></i>
-                    <span id="sync-badge" class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
-                `;
-            } else {
-                btnSync.innerHTML = `
-                    <i data-lucide="cloud-off" class="w-5 h-5 text-gray-500"></i>
-                    <span id="sync-badge" class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
-                `;
-            }
-        };
-
         const renderCalendar = () => {
+            const elCalendarGrid = document.getElementById('calendar-grid');
+            if(!elCalendarGrid) return;
             elCalendarGrid.innerHTML = ''; 
             
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            
-            // Actualizar Título
-            elMonthTitle.textContent = `${MONTH_NAMES[month]} ${year}`;
-            // Mantener sincronizado el valor del input nativo oculto
-            if (elMonthPicker) {
-                elMonthPicker.value = `${year}-${String(month + 1).padStart(2, '0')}`;
-            }
-
-            const daysInMonth = getDaysInMonth(year, month);
-            const firstDayIndex = getFirstDayOfMonth(year, month);
+            const year = currentDate.getFullYear(); const month = currentDate.getMonth();
+            const daysInMonth = getDaysInMonth(year, month); const firstDayIndex = getFirstDayOfMonth(year, month);
 
             const notesByDate = {};
-            notes.forEach(n => {
-                if (!notesByDate[n.dateKey]) notesByDate[n.dateKey] = [];
-                notesByDate[n.dateKey].push(n);
-            });
+            notes.forEach(n => { if (!notesByDate[n.dateKey]) notesByDate[n.dateKey] = []; notesByDate[n.dateKey].push(n); });
 
             for (let i = 0; i < firstDayIndex; i++) {
-                const emptyDiv = document.createElement('div');
-                emptyDiv.className = "aspect-square";
-                elCalendarGrid.appendChild(emptyDiv);
+                const div = document.createElement('div'); div.className = "aspect-square"; elCalendarGrid.appendChild(div);
             }
-
             for (let i = 1; i <= daysInMonth; i++) {
-                const date = new Date(year, month, i);
-                const isToday = isSameDay(date, new Date());
-                const isSelected = isSameDay(date, selectedDate);
-                const dateKey = formatDateKey(date);
-                const dayNotes = notesByDate[dateKey] || [];
-                const hasNotes = dayNotes.length > 0;
-
-                const cell = document.createElement('div');
-                cell.className = "aspect-square flex flex-col items-center justify-center relative cursor-pointer group";
-                
-                cell.onclick = () => {
-                    selectedDate = date;
-                    currentDate = new Date(date); 
-                    updateUI();
-                };
+                const date = new Date(year, month, i); const dateKey = formatDateKey(date);
+                const cell = document.createElement('div'); cell.className = "aspect-square flex flex-col items-center justify-center relative cursor-pointer group";
+                cell.onclick = () => { selectedDate = date; currentDate = new Date(date); updateUI(); };
 
                 let circleClass = "w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-[15px] sm:text-base font-medium smooth-transition ";
-                if (isSelected) {
-                    circleClass += "bg-gray-900 text-white shadow-md transform scale-110";
-                } else if (isToday) {
-                    circleClass += "bg-red-50 text-red-600 font-bold";
-                } else {
-                    circleClass += "text-gray-700 group-hover:bg-gray-100";
+                if (isSameDay(date, selectedDate)) circleClass += "bg-gray-900 text-white shadow-md transform scale-110";
+                else if (isSameDay(date, new Date())) circleClass += "bg-red-50 text-red-600 font-bold";
+                else circleClass += "text-gray-700 group-hover:bg-gray-100";
+
+                const span = document.createElement('div'); span.className = circleClass; span.textContent = i; cell.appendChild(span);
+                if (notesByDate[dateKey] && notesByDate[dateKey].length > 0) {
+                    const dot = document.createElement('div'); dot.className = `absolute bottom-1 w-1.5 h-1.5 rounded-full smooth-transition ${isSameDay(date, selectedDate) ? 'bg-white' : 'bg-red-500'}`; cell.appendChild(dot);
                 }
-
-                const span = document.createElement('div');
-                span.className = circleClass;
-                span.textContent = i; 
-
-                cell.appendChild(span);
-
-                if (hasNotes) {
-                    const dot = document.createElement('div');
-                    dot.className = `absolute bottom-1 w-1.5 h-1.5 rounded-full smooth-transition ${isSelected ? 'bg-white' : 'bg-red-500'}`;
-                    cell.appendChild(dot);
-                }
-
                 elCalendarGrid.appendChild(cell);
             }
         };
 
         const renderBanner = () => {
-            elDateBanner.textContent = `${DAY_NAMES[selectedDate.getDay()]}, ${selectedDate.getDate()} de ${MONTH_NAMES[selectedDate.getMonth()].toLowerCase()}`;
-            const dateKey = formatDateKey(selectedDate);
-            const count = notes.filter(n => n.dateKey === dateKey).length;
-            elNotesCount.textContent = count === 1 ? '1 evento' : `${count} eventos`;
+            const banner = document.getElementById('date-banner');
+            const countLabel = document.getElementById('notes-count');
+            if (banner) banner.textContent = `${DAY_NAMES[selectedDate.getDay()]}, ${selectedDate.getDate()} de ${MONTH_NAMES[selectedDate.getMonth()].toLowerCase()}`;
+            if (countLabel) {
+                const count = notes.filter(n => n.dateKey === formatDateKey(selectedDate)).length;
+                countLabel.textContent = count === 1 ? '1 evento' : `${count} eventos`;
+            }
         };
 
         const renderNotes = () => {
+            const elNotesList = document.getElementById('notes-list');
+            if(!elNotesList) return;
             elNotesList.innerHTML = '';
-            const dateKey = formatDateKey(selectedDate);
-            const selectedDayNotes = notes.filter(n => n.dateKey === dateKey);
-
+            
+            const selectedDayNotes = notes.filter(n => n.dateKey === formatDateKey(selectedDate));
             if (selectedDayNotes.length === 0) {
-                elNotesList.innerHTML = `
-                    <div class="flex flex-col items-center justify-center py-16 text-gray-400 opacity-60">
-                        <i data-lucide="coffee" class="w-12 h-12 mb-3"></i>
-                        <p class="text-[15px] font-medium">No hay eventos para hoy</p>
-                    </div>`;
-                return;
+                elNotesList.innerHTML = `<div class="flex flex-col items-center justify-center py-16 text-gray-400 opacity-60"><i data-lucide="coffee" class="w-12 h-12 mb-3"></i><p class="text-[15px] font-medium">No hay eventos para hoy</p></div>`; return;
             }
-
             selectedDayNotes.forEach(note => {
-                const noteDiv = document.createElement('div');
+                const noteDiv = document.createElement('div'); 
                 noteDiv.className = "bg-white p-4 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-gray-100 flex items-start gap-4 active:scale-[0.98] smooth-transition cursor-pointer group";
-                
                 noteDiv.onclick = () => openPreview(note);
 
-                const iconContainer = document.createElement('div');
-                iconContainer.className = "w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0 text-red-500 group-hover:bg-red-100 smooth-transition";
+                const iconContainer = document.createElement('div'); 
+                iconContainer.className = "w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0 text-red-500 group-hover:bg-red-100 smooth-transition"; 
                 iconContainer.innerHTML = '<i data-lucide="align-left" class="w-5 h-5"></i>';
-
-                const textContainer = document.createElement('div');
-                textContainer.className = "flex-1 min-w-0 pt-0.5 pointer-events-none";
-                const pText = document.createElement('p');
-                pText.className = "text-gray-800 text-[14px] sm:text-[15px] whitespace-pre-wrap font-medium leading-snug line-clamp-3";
                 
+                const textContainer = document.createElement('div'); 
+                textContainer.className = "flex-1 min-w-0 pt-0.5 pointer-events-none";
+                
+                const pText = document.createElement('p'); 
+                pText.className = "text-gray-800 text-[14px] sm:text-[15px] whitespace-pre-wrap font-medium leading-snug line-clamp-3"; 
                 pText.textContent = note.content; 
                 
-                const timeStr = new Date(note.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const pTime = document.createElement('p');
-                pTime.className = "text-gray-400 text-[11px] font-bold mt-1.5 flex items-center uppercase tracking-wider";
-                pTime.innerHTML = `<i data-lucide="clock" class="w-3 h-3 mr-1"></i> ${timeStr}`;
+                const pTime = document.createElement('p'); 
+                pTime.className = "text-gray-400 text-[11px] font-bold mt-1.5 flex items-center uppercase tracking-wider"; 
+                pTime.innerHTML = `<i data-lucide="clock" class="w-3 h-3 mr-1"></i> ${new Date(note.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
                 
-                textContainer.appendChild(pText);
-                textContainer.appendChild(pTime);
-
-                noteDiv.appendChild(iconContainer);
-                noteDiv.appendChild(textContainer);
+                textContainer.appendChild(pText); 
+                textContainer.appendChild(pTime); 
+                noteDiv.appendChild(iconContainer); 
+                noteDiv.appendChild(textContainer); 
                 elNotesList.appendChild(noteDiv);
             });
         };
 
-        // --- LÓGICA PWA E INSTALACIÓN NATIVA INTELIGENTE ---
-        let deferredPrompt;
-        
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            if (!isStandalone) {
-                const btnInstall = document.getElementById('btn-install');
-                btnInstall.classList.remove('hidden');
-                btnInstall.classList.add('animate-pulse');
-            }
-        });
-
-        window.addEventListener('appinstalled', () => {
-            document.getElementById('btn-install').classList.add('hidden');
-            deferredPrompt = null;
-        });
-
-        const openInstallModal = () => {
-            elScrollArea.classList.replace('overflow-y-auto', 'overflow-hidden');
-            modalInstall.classList.remove('pointer-events-none', 'opacity-0');
-            setTimeout(() => cardInstall.classList.replace('scale-95', 'scale-100'), 10);
+        // --- SISTEMA DE COLABORACIÓN ---
+        const subscribeToWorkspace = (uid) => {
+            if (unsubscribeSnapshot) unsubscribeSnapshot();
+            
+            const notesRef = collection(db, 'artifacts', targetAppId, 'users', uid, 'notes');
+            unsubscribeSnapshot = onSnapshot(notesRef, (snapshot) => {
+                notes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                updateUI();
+            }, (error) => {
+                console.error("Error Sincronizando:", error);
+                if (error.code === 'permission-denied') {
+                    alert("Aviso de Seguridad: Para que la colaboración en equipo funcione, debes ir a la consola de Firebase -> Firestore Database -> Reglas y cambiar tu regla a:\n\nmatch /artifacts/{appId}/users/{userId}/notes/{document=**} { allow read, write: if request.auth != null; }");
+                    leaveWorkspace();
+                }
+            });
         };
 
-        const closeInstallModal = () => {
-            cardInstall.classList.replace('scale-100', 'scale-95');
-            setTimeout(() => {
-                modalInstall.classList.add('opacity-0', 'pointer-events-none');
-                elScrollArea.classList.replace('overflow-hidden', 'overflow-y-auto');
-            }, 200);
-        };
-
-        document.getElementById('btn-install').addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    deferredPrompt = null;
-                    document.getElementById('btn-install').classList.remove('animate-pulse');
-                    document.getElementById('btn-install').classList.add('hidden');
-                }
-            }
-        });
-
-        document.getElementById('btn-close-install').addEventListener('click', closeInstallModal);
-        document.getElementById('btn-got-it').addEventListener('click', closeInstallModal);
-        modalInstall.addEventListener('click', (e) => { if(e.target === modalInstall) closeInstallModal(); });
-
-        if (isIOS && !isStandalone) {
-            const hasSeenPrompt = localStorage.getItem('iosPwaPromptShown');
-            if (!hasSeenPrompt) {
-                setTimeout(() => {
-                    openInstallModal();
-                    localStorage.setItem('iosPwaPromptShown', 'true');
-                }, 2500); 
-            }
-        }
-
-        // --- LÓGICA DE DATOS Y FLUJO UNIVERSAL SEGURO ---
-        const initDataFlow = async () => {
-            initWeekdays();
-            updateUI();
-
-            if (!auth || !db) return;
-
-            if (isLocalFile) {
-                console.warn("[INIT] Archivo Local detectado.");
-                return;
-            }
-
-            try {
-                await auth.authStateReady();
-
-                onAuthStateChanged(auth, async (currentUser) => {
-                    user = currentUser;
-                    
-                    if (!user) {
-                        notes = [];
-                        updateUI();
-                        if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
-                        
-                        try {
-                            await signInAnonymously(auth);
-                        } catch (e) {
-                            console.error("Error Auth Anónima:", e);
-                        }
-                        return;
-                    }
-                    
-                    // CONEXIÓN A FIRESTORE CON SOPORTE OFFLINE
-                    if (unsubscribeSnapshot) unsubscribeSnapshot();
-                    
-                    const notesRef = collection(db, 'artifacts', targetAppId, 'users', user.uid, 'notes');
-                    
-                    unsubscribeSnapshot = onSnapshot(notesRef, (snapshot) => {
-                        notes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        updateUI();
-                    }, (error) => {
-                        console.error("Error Firestore:", error);
-                    });
-                });
-            } catch (error) { 
-                console.error("Error iniciando el flujo de datos:", error); 
-            }
-        };
-
-        const handleGoogleLogin = async () => {
-            if (isLocalFile) {
-                alert("Sube este archivo a Vercel para probar la sincronización de Google.");
-                return;
-            }
-
-            try {
-                if (user && user.isAnonymous) {
-                    await linkWithPopup(user, googleProvider);
-                    alert("¡Sincronización exitosa! Tus datos están respaldados.");
-                    closeSync();
-                } else {
-                    await signInWithPopup(auth, googleProvider);
-                    closeSync();
-                }
-            } catch (error) {
-                console.error("[ERROR LOGIN]", error);
-                
-                if (error.code === 'auth/credential-already-in-use') {
-                    try {
-                        console.log("[RESCATE] Cuenta ya existente. Extrayendo credencial secreta...");
-                        const credential = GoogleAuthProvider.credentialFromError(error);
-                        await signInWithCredential(auth, credential);
-                        alert("Has iniciado sesión correctamente. Sincronizando los datos de tus otros dispositivos...");
-                        closeSync();
-                    } catch (e) { 
-                        console.error("[ERROR RESCATE]", e); 
-                        alert("Hubo un error al recuperar la cuenta. Intenta de nuevo.");
-                    }
-                } else if (error.code === 'auth/unauthorized-domain') {
-                    alert(`El dominio actual (${window.location.hostname}) no está autorizado en Firebase.\nAgrega este dominio en Configuración > Dominios autorizados.`);
-                } else if (error.code === 'auth/popup-blocked') {
-                    alert("⚠️ Ventana bloqueada.\n\nSi abriste esto desde WhatsApp o Instagram, toca los 3 puntitos arriba a la derecha y elige 'Abrir en Chrome' o 'Abrir en Safari' para poder iniciar sesión con Google.");
-                } else if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
-                    alert(`Hubo un error con la autenticación: ${error.message}`);
-                }
-            }
-        };
-
-        const openSync = () => {
-            if (user && !user.isAnonymous) {
-                if(window.confirm("Ya tienes tu calendario respaldado. ¿Deseas cerrar sesión en este dispositivo?")) {
-                    signOut(auth).then(() => {
-                        notes = [];
-                        window.location.reload(); 
-                    });
-                }
+        const generateShareCode = async () => {
+            if (!user || user.isAnonymous) {
+                alert("Debes iniciar sesión con Google para poder compartir tu calendario con un equipo.");
                 return;
             }
             
-            elScrollArea.classList.replace('overflow-y-auto', 'overflow-hidden');
-            modalSync.classList.remove('pointer-events-none', 'opacity-0');
-            setTimeout(() => cardSync.classList.replace('scale-95', 'scale-100'), 10);
+            const code = user.uid.substring(0,6).toUpperCase();
+            
+            try {
+                await setDoc(doc(db, 'artifacts', targetAppId, 'public', 'shares', code), {
+                    targetUid: user.uid,
+                    createdAt: Date.now()
+                });
+                
+                const displayCode = document.getElementById('display-share-code');
+                if(displayCode) displayCode.textContent = code;
+                
+                closeMenu();
+                setTimeout(() => {
+                    document.getElementById('main-scroll-area')?.classList.replace('overflow-y-auto', 'overflow-hidden');
+                    modalShareCode?.classList.remove('pointer-events-none', 'opacity-0');
+                    setTimeout(() => cardShareCode?.classList.replace('scale-95', 'scale-100'), 10);
+                }, 250);
+            } catch (error) {
+                console.error("Error generando código:", error);
+                if (error.code === 'permission-denied') alert("Error de Firebase: Tus reglas bloquean la creación de códigos. Modifícalas para permitir escritura pública.");
+            }
         };
 
-        const closeSync = () => {
-            cardSync.classList.replace('scale-100', 'scale-95');
-            setTimeout(() => {
-                modalSync.classList.add('opacity-0', 'pointer-events-none');
-                elScrollArea.classList.replace('overflow-hidden', 'overflow-y-auto');
-            }, 200);
-        };
+        const joinWorkspace = async () => {
+            const inputEl = document.getElementById('input-join-code');
+            const btn = document.getElementById('btn-submit-join');
+            if(!inputEl || !btn) return;
 
-        // --- ACCIONES DE NOTA Y COMPARTIR ---
-        const saveNoteAction = async () => {
-            const content = elTextarea.value.trim().substring(0, 5000); 
-            const dateKey = formatDateKey(selectedDate);
-            if (!content) return;
-
-            elBtnSaveNote.disabled = true;
-            elBtnSaveNote.blur(); 
-            elBtnSaveNote.textContent = 'Guardando...';
+            const input = inputEl.value.trim().toUpperCase();
+            if (input.length < 6) { alert("Ingresa un código válido de 6 caracteres."); return; }
+            
+            btn.disabled = true; btn.innerHTML = "Buscando...";
 
             try {
-                if (user && user.uid && !isLocalFile) {
-                    const notesRef = collection(db, 'artifacts', targetAppId, 'users', user.uid, 'notes');
-                    if (editingNoteId) {
-                        await updateDoc(doc(db, 'artifacts', targetAppId, 'users', user.uid, 'notes', editingNoteId), {
-                            content: content, updatedAt: Date.now()
-                        });
-                    } else {
-                        await addDoc(notesRef, {
-                            dateKey: dateKey, content: content, createdAt: Date.now(), updatedAt: Date.now()
-                        });
-                    }
+                const docRef = doc(db, 'artifacts', targetAppId, 'public', 'shares', input);
+                const snap = await getDoc(docRef);
+                
+                if (snap.exists()) {
+                    const targetUid = snap.data().targetUid;
+                    activeWorkspaceUid = targetUid;
+                    localStorage.setItem('collabWorkspace', targetUid);
+                    
+                    alert("¡Conectado exitosamente al calendario del equipo!");
+                    closeJoinModal();
+                    subscribeToWorkspace(targetUid);
                 } else {
-                    if (editingNoteId) {
-                        const idx = notes.findIndex(n => n.id === editingNoteId);
-                        if (idx > -1) notes[idx].content = content;
-                    } else {
-                        notes.push({ id: Date.now().toString(), dateKey: dateKey, content: content, createdAt: Date.now() });
+                    alert("Código no encontrado. Verifica e intenta de nuevo.");
+                }
+            } catch (error) {
+                console.error("Error uniéndose:", error);
+                if (error.code === 'permission-denied') alert("Tus reglas de Firebase bloquean la búsqueda de códigos compartidos.");
+                else alert("Hubo un error de conexión.");
+            } finally {
+                btn.disabled = false; btn.innerHTML = `Conectar <i data-lucide="arrow-right" class="w-5 h-5"></i>`; 
+                if (window.lucide) lucide.createIcons();
+            }
+        };
+
+        const leaveWorkspace = () => {
+            if(window.confirm("¿Seguro que deseas desconectarte de este equipo y volver a tu calendario personal?")) {
+                localStorage.removeItem('collabWorkspace');
+                activeWorkspaceUid = user ? user.uid : null;
+                closeMenu();
+                if (activeWorkspaceUid) subscribeToWorkspace(activeWorkspaceUid);
+                else { notes = []; updateUI(); }
+            }
+        };
+
+        const initDataFlow = async () => {
+            initWeekdays(); updateUI();
+            if (!auth || !db || isLocalFile) return;
+
+            try {
+                await auth.authStateReady();
+                onAuthStateChanged(auth, async (currentUser) => {
+                    user = currentUser;
+                    if (!user) {
+                        notes = []; updateUI();
+                        if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+                        try { await signInAnonymously(auth); } catch (e) { console.error("Error Auth Anónima:", e); }
+                        return;
                     }
+                    
+                    if (!activeWorkspaceUid) activeWorkspaceUid = user.uid;
+                    subscribeToWorkspace(activeWorkspaceUid);
+                });
+            } catch (error) { console.error("Error iniciando el flujo de datos:", error); }
+        };
+
+        const validateTextarea = () => { 
+            const btn = document.getElementById('btn-save-note');
+            const txt = document.getElementById('note-textarea');
+            if (btn && txt) btn.disabled = txt.value.trim().length === 0; 
+        };
+
+        const saveNoteAction = async () => {
+            const elTextarea = document.getElementById('note-textarea');
+            const elBtnSaveNote = document.getElementById('btn-save-note');
+            if(!elTextarea || !elBtnSaveNote) return;
+
+            const content = elTextarea.value.trim().substring(0, 5000); const dateKey = formatDateKey(selectedDate);
+            if (!content) return;
+
+            elBtnSaveNote.disabled = true; elBtnSaveNote.blur(); elBtnSaveNote.textContent = 'Guardando...';
+
+            try {
+                if (user && activeWorkspaceUid && !isLocalFile) {
+                    const notesRef = collection(db, 'artifacts', targetAppId, 'users', activeWorkspaceUid, 'notes');
+                    if (editingNoteId) await updateDoc(doc(db, 'artifacts', targetAppId, 'users', activeWorkspaceUid, 'notes', editingNoteId), { content: content, updatedAt: Date.now() });
+                    else await addDoc(notesRef, { dateKey: dateKey, content: content, createdAt: Date.now(), updatedAt: Date.now() });
+                } else {
+                    if (editingNoteId) { const idx = notes.findIndex(n => n.id === editingNoteId); if (idx > -1) notes[idx].content = content; } 
+                    else notes.push({ id: Date.now().toString(), dateKey: dateKey, content: content, createdAt: Date.now() });
                     updateUI();
                 }
                 closeEditor();
-            } catch (error) { 
-                console.error("[ERROR GUARDAR]", error); 
-                alert("No se pudo guardar la nota. Verifica tu conexión.");
-            } 
-            finally { 
-                setTimeout(() => {
-                    elBtnSaveNote.textContent = 'Guardar';
-                    validateTextarea();
-                }, 250); 
-            }
+            } catch (error) { console.error("Error Guardar:", error); alert("No se pudo guardar la nota."); } 
+            finally { setTimeout(() => { elBtnSaveNote.textContent = 'Guardar'; validateTextarea(); }, 250); }
         };
 
         const deleteNoteAction = async (noteId) => {
             if(window.confirm("¿Eliminar este evento permanentemente?")) {
                 try {
-                    if (user && user.uid && !isLocalFile) {
-                        await deleteDoc(doc(db, 'artifacts', targetAppId, 'users', user.uid, 'notes', noteId));
-                    } else {
-                        notes = notes.filter(n => n.id !== noteId);
-                        updateUI();
-                    }
+                    if (user && activeWorkspaceUid && !isLocalFile) await deleteDoc(doc(db, 'artifacts', targetAppId, 'users', activeWorkspaceUid, 'notes', noteId));
+                    else { notes = notes.filter(n => n.id !== noteId); updateUI(); }
                     if (editingNoteId === noteId) closeEditor();
-                } catch (error) { 
-                    console.error("[ERROR BORRAR]", error); 
-                }
+                } catch (error) { console.error("Error Borrar:", error); }
             }
         };
 
         const handlePasteClick = async () => {
+            const elTextarea = document.getElementById('note-textarea');
+            if(!elTextarea) return;
             try {
                 const text = await navigator.clipboard.readText();
                 if (text) {
@@ -751,151 +667,231 @@
                     
                     if (elTextarea.value.length > 5000) {
                         elTextarea.value = elTextarea.value.substring(0, 5000);
-                        alert("El texto se ha recortado a 5000 caracteres para evitar errores.");
+                        alert("El texto se ha recortado a 5000 caracteres.");
                     }
-                    
                     validateTextarea();
                     if(window.innerWidth > 640) elTextarea.focus();
                 }
             } catch (err) {
-                alert('Tu navegador ha bloqueado el acceso al portapapeles por seguridad. Por favor, mantén presionado el cuadro de texto y selecciona "Pegar".');
+                alert('Tu navegador ha bloqueado el acceso al portapapeles. Usa "Pegar" desde tu teclado.');
             }
         };
 
         const handleShareEvent = async () => {
             if (!previewNoteObj) return;
-            
             const [y, m, d] = previewNoteObj.dateKey.split('-');
             const eventDate = new Date(y, m - 1, d);
             const dateStr = `${DAY_NAMES[eventDate.getDay()]}, ${eventDate.getDate()} de ${MONTH_NAMES[eventDate.getMonth()]}`;
-            
             const textToShare = `📅 *Evento el ${dateStr}*\n\n${previewNoteObj.content}`;
 
             if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: 'Evento del Calendario',
-                        text: textToShare
-                    });
-                } catch (err) {
-                    if (err.name !== "AbortError") {
-                        console.error("Error compartiendo:", err);
-                    }
-                }
+                try { await navigator.share({ title: 'Evento', text: textToShare }); } 
+                catch (err) { if (err.name !== "AbortError") console.error("Error compartiendo:", err); }
             } else {
-                try {
-                    await copyToClipboard(textToShare);
-                    alert("¡Evento copiado al portapapeles! Ya puedes pegarlo en un mensaje.");
-                } catch (e) {
-                    alert("Tu navegador no soporta compartir automáticamente.");
-                }
+                try { await copyToClipboard(textToShare); alert("¡Evento copiado al portapapeles!"); } 
+                catch (e) { alert("Tu navegador no soporta compartir."); }
             }
         };
 
-        // --- CONTROL DE MODALES ---
-        const openEditor = (note = null) => {
-            elScrollArea.classList.replace('overflow-y-auto', 'overflow-hidden');
-            modalEditor.classList.remove('pointer-events-none', 'opacity-0');
-            setTimeout(() => cardEditor.classList.replace('scale-95', 'scale-100'), 10);
+        const openMenu = () => {
+            document.getElementById('main-scroll-area')?.classList.replace('overflow-y-auto', 'overflow-hidden');
+            modalMenu?.classList.remove('pointer-events-none', 'opacity-0');
+            setTimeout(() => cardMenu?.classList.replace('scale-95', 'scale-100'), 10);
+        };
+        const closeMenu = () => {
+            cardMenu?.classList.replace('scale-100', 'scale-95');
+            setTimeout(() => { modalMenu?.classList.add('opacity-0', 'pointer-events-none'); document.getElementById('main-scroll-area')?.classList.replace('overflow-hidden', 'overflow-y-auto'); }, 200);
+        };
+        const closeShareModal = () => {
+            cardShareCode?.classList.replace('scale-100', 'scale-95');
+            setTimeout(() => { modalShareCode?.classList.add('opacity-0', 'pointer-events-none'); document.getElementById('main-scroll-area')?.classList.replace('overflow-hidden', 'overflow-y-auto'); }, 200);
+        };
+        const closeJoinModal = () => {
+            cardJoinCode?.classList.replace('scale-100', 'scale-95');
+            setTimeout(() => { modalJoinCode?.classList.add('opacity-0', 'pointer-events-none'); document.getElementById('main-scroll-area')?.classList.replace('overflow-hidden', 'overflow-y-auto'); }, 200);
+        };
+        const openEditor = (note = null) => { 
+            document.getElementById('main-scroll-area')?.classList.replace('overflow-y-auto', 'overflow-hidden'); 
+            modalEditor?.classList.remove('pointer-events-none', 'opacity-0'); 
+            setTimeout(() => cardEditor?.classList.replace('scale-95', 'scale-100'), 10); 
             
-            if (note) {
-                editingNoteId = note.id;
-                elTextarea.value = note.content;
-                document.getElementById('editor-title').textContent = 'Editar Evento';
-            } else {
-                editingNoteId = null;
-                elTextarea.value = '';
-                document.getElementById('editor-title').textContent = 'Nueva Nota';
+            const elTextarea = document.getElementById('note-textarea');
+            const editorTitle = document.getElementById('editor-title');
+
+            if (note) { 
+                editingNoteId = note.id; 
+                if(elTextarea) elTextarea.value = note.content; 
+                if(editorTitle) editorTitle.textContent = 'Editar Evento'; 
+            } else { 
+                editingNoteId = null; 
+                if(elTextarea) elTextarea.value = ''; 
+                if(editorTitle) editorTitle.textContent = 'Nueva Nota'; 
+            } 
+            validateTextarea(); 
+        };
+        const closeEditor = () => { 
+            cardEditor?.classList.replace('scale-100', 'scale-95'); 
+            setTimeout(() => { 
+                modalEditor?.classList.add('opacity-0', 'pointer-events-none'); 
+                editingNoteId = null; 
+                const elTextarea = document.getElementById('note-textarea');
+                if(elTextarea) elTextarea.value = ''; 
+                document.getElementById('main-scroll-area')?.classList.replace('overflow-hidden', 'overflow-y-auto'); 
+            }, 200); 
+        };
+        const openPreview = (note) => { 
+            document.getElementById('main-scroll-area')?.classList.replace('overflow-y-auto', 'overflow-hidden'); 
+            previewNoteObj = note; 
+            const prevText = document.getElementById('preview-text');
+            if(prevText) prevText.textContent = note.content; 
+            modalPreview?.classList.remove('pointer-events-none', 'opacity-0'); 
+            setTimeout(() => cardPreview?.classList.replace('scale-95', 'scale-100'), 10); 
+        };
+        const closePreview = () => { 
+            cardPreview?.classList.replace('scale-100', 'scale-95'); 
+            setTimeout(() => { 
+                modalPreview?.classList.add('opacity-0', 'pointer-events-none'); 
+                previewNoteObj = null; 
+                document.getElementById('main-scroll-area')?.classList.replace('overflow-hidden', 'overflow-y-auto'); 
+            }, 200); 
+        };
+
+        const openSync = () => { 
+            if (user && !user.isAnonymous) { 
+                if(window.confirm("Ya tienes tu calendario respaldado. ¿Deseas cerrar sesión en este dispositivo?")) { 
+                    signOut(auth).then(() => { notes = []; window.location.reload(); }); 
+                } 
+                return; 
+            } 
+            document.getElementById('main-scroll-area')?.classList.replace('overflow-y-auto', 'overflow-hidden'); 
+            modalSync?.classList.remove('pointer-events-none', 'opacity-0'); 
+            setTimeout(() => cardSync?.classList.replace('scale-95', 'scale-100'), 10); 
+        };
+        const closeSync = () => { 
+            cardSync?.classList.replace('scale-100', 'scale-95'); 
+            setTimeout(() => { 
+                modalSync?.classList.add('opacity-0', 'pointer-events-none'); 
+                document.getElementById('main-scroll-area')?.classList.replace('overflow-hidden', 'overflow-y-auto'); 
+            }, 200); 
+        };
+
+        // --- PWA LOGIC ---
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => { 
+            e.preventDefault(); deferredPrompt = e; 
+            if (!isStandalone) {
+                const btn = document.getElementById('btn-install');
+                const btnHeader = document.getElementById('btn-install-header');
+                if(btn) btn.classList.remove('hidden'); 
+                if(btnHeader) btnHeader.classList.remove('hidden');
+            } 
+        });
+        window.addEventListener('appinstalled', () => { 
+            document.getElementById('btn-install')?.classList.add('hidden'); 
+            document.getElementById('btn-install-header')?.classList.add('hidden');
+            deferredPrompt = null; 
+        });
+
+        const promptInstall = async () => {
+            if (deferredPrompt) { 
+                deferredPrompt.prompt(); 
+                const { outcome } = await deferredPrompt.userChoice; 
+                if (outcome === 'accepted') { 
+                    deferredPrompt = null; 
+                    document.getElementById('btn-install')?.classList.add('hidden'); 
+                    document.getElementById('btn-install-header')?.classList.add('hidden'); 
+                    closeMenu(); 
+                } 
+            } else if (isIOS && !isStandalone) { 
+                closeMenu(); 
+                setTimeout(() => { 
+                    document.getElementById('main-scroll-area')?.classList.replace('overflow-y-auto', 'overflow-hidden'); 
+                    modalInstall?.classList.remove('pointer-events-none', 'opacity-0'); 
+                    setTimeout(() => cardInstall?.classList.replace('scale-95', 'scale-100'), 10); 
+                }, 250); 
             }
-            validateTextarea();
         };
 
-        const closeEditor = () => {
-            cardEditor.classList.replace('scale-100', 'scale-95');
+        const closeInstallModal = () => { 
+            cardInstall?.classList.replace('scale-100', 'scale-95'); 
+            setTimeout(() => { 
+                modalInstall?.classList.add('opacity-0', 'pointer-events-none'); 
+                document.getElementById('main-scroll-area')?.classList.replace('overflow-hidden', 'overflow-y-auto'); 
+            }, 200); 
+        };
+
+        // BINDING DE EVENTOS (Completamente seguros con función wrapper)
+        bindEvent('btn-prev-month', 'click', () => { currentDate.setDate(1); currentDate.setMonth(currentDate.getMonth() - 1); updateUI(); });
+        bindEvent('btn-next-month', 'click', () => { currentDate.setDate(1); currentDate.setMonth(currentDate.getMonth() + 1); updateUI(); });
+        bindEvent('month-picker', 'change', (e) => { if (!e.target.value) return; const [yearStr, monthStr] = e.target.value.split('-'); currentDate.setFullYear(parseInt(yearStr, 10)); currentDate.setMonth(parseInt(monthStr, 10) - 1); currentDate.setDate(1); updateUI(); });
+        bindEvent('btn-today', 'click', () => { currentDate = new Date(); selectedDate = new Date(); updateUI(); });
+        
+        bindEvent('btn-open-menu', 'click', openMenu);
+        bindEvent('btn-close-menu', 'click', closeMenu);
+        bindEvent('btn-menu-share', 'click', generateShareCode);
+        bindEvent('btn-menu-leave', 'click', leaveWorkspace);
+        bindEvent('btn-menu-join', 'click', () => {
+            closeMenu();
             setTimeout(() => {
-                modalEditor.classList.add('opacity-0', 'pointer-events-none');
-                editingNoteId = null;
-                elTextarea.value = '';
-                elScrollArea.classList.replace('overflow-hidden', 'overflow-y-auto');
-            }, 200);
-        };
-
-        const openPreview = (note) => {
-            elScrollArea.classList.replace('overflow-y-auto', 'overflow-hidden');
-            previewNoteObj = note;
-            document.getElementById('preview-text').textContent = note.content;
-            
-            modalPreview.classList.remove('pointer-events-none', 'opacity-0');
-            setTimeout(() => cardPreview.classList.replace('scale-95', 'scale-100'), 10);
-        };
-
-        const closePreview = () => {
-            cardPreview.classList.replace('scale-100', 'scale-95');
-            setTimeout(() => {
-                modalPreview.classList.add('opacity-0', 'pointer-events-none');
-                previewNoteObj = null;
-                elScrollArea.classList.replace('overflow-hidden', 'overflow-y-auto');
-            }, 200);
-        };
-
-        const preventTouchScroll = (e) => {
-            if (e.target === modalEditor || e.target === modalPreview || e.target === modalSync || e.target === modalInstall) e.preventDefault();
-        };
-        modalEditor.addEventListener('touchmove', preventTouchScroll, { passive: false });
-        modalPreview.addEventListener('touchmove', preventTouchScroll, { passive: false });
-        modalSync.addEventListener('touchmove', preventTouchScroll, { passive: false });
-        modalInstall.addEventListener('touchmove', preventTouchScroll, { passive: false });
-
-        const validateTextarea = () => { elBtnSaveNote.disabled = elTextarea.value.trim().length === 0; };
-
-        // --- LISTENERS ---
-        document.getElementById('btn-prev-month').addEventListener('click', () => { 
-            currentDate.setDate(1); 
-            currentDate.setMonth(currentDate.getMonth() - 1); 
-            updateUI(); 
+                document.getElementById('main-scroll-area')?.classList.replace('overflow-y-auto', 'overflow-hidden');
+                modalJoinCode?.classList.remove('pointer-events-none', 'opacity-0');
+                setTimeout(() => cardJoinCode?.classList.replace('scale-95', 'scale-100'), 10);
+            }, 250);
         });
         
-        document.getElementById('btn-next-month').addEventListener('click', () => { 
-            currentDate.setDate(1); 
-            currentDate.setMonth(currentDate.getMonth() + 1); 
-            updateUI(); 
+        bindEvent('btn-close-share-code', 'click', closeShareModal);
+        bindEvent('btn-copy-code', 'click', async () => {
+            const displayCode = document.getElementById('display-share-code');
+            if(displayCode) {
+                await copyToClipboard(displayCode.textContent);
+                alert("Código copiado al portapapeles");
+            }
         });
-        
-        // --- NUEVO: Listener para el salto directo de fecha (Selector nativo) ---
-        if (elMonthPicker) {
-            elMonthPicker.addEventListener('change', (e) => {
-                if (!e.target.value) return;
-                const [yearStr, monthStr] = e.target.value.split('-');
-                currentDate.setFullYear(parseInt(yearStr, 10));
-                currentDate.setMonth(parseInt(monthStr, 10) - 1);
-                currentDate.setDate(1); // Evitar salto de mes si hoy es 31 y el nuevo mes tiene 30
-                updateUI();
-            });
-        }
-        
-        document.getElementById('btn-today').addEventListener('click', () => { currentDate = new Date(); selectedDate = new Date(); updateUI(); });
-        document.getElementById('btn-add-event').addEventListener('click', () => openEditor());
-        
-        document.getElementById('btn-sync').addEventListener('click', openSync);
-        document.getElementById('btn-google-login').addEventListener('click', handleGoogleLogin);
-        document.getElementById('btn-close-sync').addEventListener('click', closeSync);
-        modalSync.addEventListener('click', (e) => { if(e.target === modalSync) closeSync(); });
 
-        document.getElementById('btn-close-editor').addEventListener('click', closeEditor);
-        elBtnSaveNote.addEventListener('click', saveNoteAction);
-        elBtnPasteText.addEventListener('click', handlePasteClick);
-        elTextarea.addEventListener('input', validateTextarea);
+        bindEvent('btn-close-join-code', 'click', closeJoinModal);
+        bindEvent('btn-submit-join', 'click', joinWorkspace);
 
-        modalEditor.addEventListener('click', (e) => { if(e.target === modalEditor) closeEditor(); });
-        modalPreview.addEventListener('click', (e) => { if(e.target === modalPreview) closePreview(); });
-        
-        document.getElementById('btn-close-preview').addEventListener('click', closePreview);
-        document.getElementById('btn-preview-delete').addEventListener('click', () => { const id = previewNoteObj.id; closePreview(); setTimeout(()=>deleteNoteAction(id), 250); });
-        document.getElementById('btn-preview-edit').addEventListener('click', () => { const n = previewNoteObj; closePreview(); setTimeout(()=>openEditor(n), 250); });
-        
-        document.getElementById('btn-preview-share').addEventListener('click', handleShareEvent);
+        bindEvent('btn-add-event', 'click', () => openEditor());
+        bindEvent('btn-close-editor', 'click', closeEditor);
+        bindEvent('btn-save-note', 'click', saveNoteAction);
+        bindEvent('btn-paste-text', 'click', handlePasteClick);
+        bindEvent('note-textarea', 'input', validateTextarea);
 
-        // INICIALIZACIÓN FINAL
+        bindEvent('btn-close-preview', 'click', closePreview);
+        bindEvent('btn-preview-delete', 'click', () => { const id = previewNoteObj?.id; closePreview(); if(id) setTimeout(()=>deleteNoteAction(id), 250); });
+        bindEvent('btn-preview-edit', 'click', () => { const n = previewNoteObj; closePreview(); if(n) setTimeout(()=>openEditor(n), 250); });
+        bindEvent('btn-preview-share', 'click', handleShareEvent);
+
+        bindEvent('btn-sync', 'click', openSync);
+        bindEvent('btn-close-sync', 'click', closeSync);
+        bindEvent('btn-google-login', 'click', async () => {
+            if (isLocalFile) return alert("Sube a Vercel para probar Google.");
+            try { if (user && user.isAnonymous) { await linkWithPopup(user, googleProvider); closeSync(); } else { await signInWithPopup(auth, googleProvider); closeSync(); } }
+            catch (error) { if (error.code === 'auth/credential-already-in-use') { try { const cred = GoogleAuthProvider.credentialFromError(error); await signInWithCredential(auth, cred); closeSync(); } catch(e){} } }
+        });
+
+        bindEvent('btn-install', 'click', promptInstall);
+        bindEvent('btn-install-header', 'click', promptInstall);
+        bindEvent('btn-close-install', 'click', closeInstallModal);
+        bindEvent('btn-got-it', 'click', closeInstallModal);
+
+        // Prevenir scroll en modales y cerrar al tocar el fondo oscuro
+        const bindModalBg = (modalObj, closeFn) => {
+            if(modalObj) {
+                modalObj.addEventListener('click', (e) => { if(e.target === modalObj && closeFn) closeFn(); });
+                modalObj.addEventListener('touchmove', (e) => { if(e.target === modalObj) e.preventDefault(); }, { passive: false });
+            }
+        };
+
+        bindModalBg(modalMenu, closeMenu);
+        bindModalBg(modalShareCode, closeShareModal);
+        bindModalBg(modalJoinCode, closeJoinModal);
+        bindModalBg(modalEditor, closeEditor);
+        bindModalBg(modalPreview, closePreview);
+        bindModalBg(modalSync, closeSync);
+        bindModalBg(modalInstall, closeInstallModal);
+
+        // Arrancar
         initDataFlow();
 
     </script>
