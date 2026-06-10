@@ -409,12 +409,14 @@
             const leaveBtn = document.getElementById('btn-menu-leave');
             const btnAddEvent = document.getElementById('btn-add-event');
             const previewActions = document.getElementById('preview-actions');
+            const btnPreviewShare = document.getElementById('btn-preview-share');
 
             // Mostrar u ocultar UI según permisos
             if (badge) badge.style.display = isCollab ? 'block' : 'none';
             if (leaveBtn) leaveBtn.style.display = isCollab ? 'flex' : 'none';
             if (btnAddEvent) btnAddEvent.style.display = isCollab ? 'none' : 'flex'; // Oculta el botón (+) si es colaborador
             if (previewActions) previewActions.style.display = isCollab ? 'none' : 'grid'; // Oculta Editar y Borrar si es colaborador
+            if (btnPreviewShare) btnPreviewShare.style.display = isCollab ? 'none' : 'flex'; // Oculta Compartir Evento si es colaborador
 
             renderCalendar();
             renderBanner();
@@ -536,7 +538,6 @@
             const code = user.uid.substring(0,6).toUpperCase();
             
             try {
-                // CORRECCIÓN: Usar siempre la ruta pública estricta del entorno
                 await setDoc(doc(db, 'artifacts', targetAppId, 'public', 'data', 'shares', code), {
                     targetUid: user.uid,
                     createdAt: Date.now()
@@ -570,7 +571,6 @@
             btn.disabled = true; btn.innerHTML = "Buscando...";
 
             try {
-                // CORRECCIÓN: Usar siempre la ruta pública estricta del entorno
                 const docRef = doc(db, 'artifacts', targetAppId, 'public', 'data', 'shares', input);
                 const snap = await getDoc(docRef);
                 
