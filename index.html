@@ -686,7 +686,20 @@
             }
         };
 
-        // --- SISTEMA DE NOTIFICACIONES ---
+        // --- SISTEMA DE NOTIFICACIONES REPARADO ---
+        const sendNotification = (title, options) => {
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.ready.then(reg => {
+                    reg.showNotification(title, options);
+                }).catch(err => {
+                    console.log("Error con SW notification, intentando nativa", err);
+                    new Notification(title, options);
+                });
+            } else {
+                new Notification(title, options);
+            }
+        };
+
         const requestNotifications = async () => {
             if (!('Notification' in window)) {
                 alert('Tu navegador no soporta notificaciones.');
@@ -694,51 +707,60 @@
             }
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
-                alert('¡Notificaciones activadas! Te avisaremos 15 minutos antes de tus eventos programados.');
+                alert('¡Notificaciones activadas correctamente!');
+                
+                // NOTIFICACIÓN DE PRUEBA INMEDIATA
+                sendNotification('¡Notificaciones Activas!', {
+                    body: 'Así se verán los recordatorios de tus eventos programados.',
+                    icon: 'https://www.image2url.com/r2/default/images/1781026922099-d13a7475-7315-499f-9e3d-d3ed89fa7306.png',
+                    badge: 'https://www.image2url.com/r2/default/images/1781026922099-d13a7475-7315-499f-9e3d-d3ed89fa7306.png',
+                    vibrate: [200, 100, 200]
+                });
+                
             } else {
                 alert('Permiso denegado. Puedes cambiarlo en la configuración de tu navegador o celular.');
             }
             closeMenu();
         };
 
-        // El motor que revisa la hora constantemente
+        // El motor que revisa la hora constantemente (Mejorado)
         const startNotificationEngine = () => {
+            // Revisar cada 10 segundos para mayor precisión
             setInterval(() => {
                 if (Notification.permission === 'granted') {
                     const now = new Date();
                     const dateKey = formatDateKey(now);
                     
                     notes.forEach(note => {
-                        // Solo revisar las notas de hoy que tengan una hora configurada y que no hayan sido notificadas en esta sesión
-                        if (note.dateKey === dateKey && note.time && !note.notified) {
+                        // Anti-Spam: Si ya notificamos esta nota en este celular, la ignoramos.
+                        if (localStorage.getItem('notified_' + note.id)) return;
+                        
+                        if (note.dateKey === dateKey && note.time) {
                             const [h, m] = note.time.split(':').map(Number);
                             const eventTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
-                            const diffMins = Math.floor((eventTime - now) / 60000);
                             
-                            // Avisar exactamente 15 minutos antes
-                            if (diffMins === 15) {
-                                note.notified = true; // Evitar que se repita la notificación durante el mismo minuto
+                            const diffMs = eventTime - now;
+                            const diffMins = Math.floor(diffMs / 60000);
+                            
+                            // DISPARADOR: Si faltan 15 minutos O MENOS (hasta 0 minutos)
+                            if (diffMins <= 15 && diffMins >= 0) {
+                                // Guardar en memoria local que ya se notificó
+                                localStorage.setItem('notified_' + note.id, 'true');
                                 
-                                const title = 'Próximo Evento (en 15 min)';
+                                const title = diffMins === 0 ? '¡Evento Ahora!' : `Próximo Evento (en ${diffMins} min)`;
                                 const options = {
                                     body: note.content.substring(0, 50) + '...',
                                     icon: 'https://www.image2url.com/r2/default/images/1781026922099-d13a7475-7315-499f-9e3d-d3ed89fa7306.png',
                                     badge: 'https://www.image2url.com/r2/default/images/1781026922099-d13a7475-7315-499f-9e3d-d3ed89fa7306.png',
-                                    vibrate: [200, 100, 200]
+                                    vibrate: [200, 100, 200, 100, 200]
                                 };
 
-                                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                                    navigator.serviceWorker.ready.then(reg => {
-                                        reg.showNotification(title, options);
-                                    });
-                                } else {
-                                    new Notification(title, options);
-                                }
+                                sendNotification(title, options);
                             }
                         }
                     });
                 }
-            }, 30000); // Revisa cada 30 segundos
+            }, 10000); // 10 segundos
         };
 
         const initDataFlow = async () => {
@@ -795,6 +817,8 @@
                         await updateDoc(doc(db, 'artifacts', targetAppId, 'users', activeWorkspaceUid, 'notes', editingNoteId), { 
                             content: content, time: timeVal, updatedAt: Date.now() 
                         });
+                        // Borrar flag local si se edita para permitir nueva notificación
+                        localStorage.removeItem('notified_' + editingNoteId);
                     } else {
                         await addDoc(notesRef, { 
                             dateKey: dateKey, content: content, time: timeVal, createdAt: Date.now(), updatedAt: Date.now() 
@@ -803,7 +827,8 @@
                 } else {
                     if (editingNoteId) { 
                         const idx = notes.findIndex(n => n.id === editingNoteId); 
-                        if (idx > -1) { notes[idx].content = content; notes[idx].time = timeVal; } 
+                        if (idx > -1) { notes[idx].content = content; notes[idx].time = timeVal; }
+                        localStorage.removeItem('notified_' + editingNoteId);
                     } else { 
                         notes.push({ id: Date.now().toString(), dateKey: dateKey, content: content, time: timeVal, createdAt: Date.now() }); 
                     }
@@ -819,6 +844,8 @@
                 try {
                     if (user && activeWorkspaceUid && !isLocalFile) await deleteDoc(doc(db, 'artifacts', targetAppId, 'users', activeWorkspaceUid, 'notes', noteId));
                     else { notes = notes.filter(n => n.id !== noteId); updateUI(); }
+                    
+                    localStorage.removeItem('notified_' + noteId); // Limpiar memoria local
                     if (editingNoteId === noteId) closeEditor();
                 } catch (error) { console.error("Error Borrar:", error); }
             }
