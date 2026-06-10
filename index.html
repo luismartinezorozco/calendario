@@ -356,7 +356,7 @@
 
         // --- VARIABLES DE DOM Y ESTADO ---
         let user = null;
-        let activeWorkspaceUid = localStorage.getItem('collabWorkspace') || null; 
+        let activeWorkspaceUid = null; 
         let notes = [];
         let currentDate = new Date();
         let selectedDate = new Date();
@@ -535,11 +535,9 @@
                 return;
             }
             
-            // Generar código aleatorio de 6 caracteres
             const code = Math.random().toString(36).substring(2, 8).toUpperCase();
             
             try {
-                // Usar siempre la ruta pública estricta del entorno
                 await setDoc(doc(db, 'artifacts', targetAppId, 'public', 'data', 'shares', code), {
                     targetUid: user.uid,
                     createdAt: Date.now()
@@ -573,7 +571,6 @@
             btn.disabled = true; btn.innerHTML = "Buscando...";
 
             try {
-                // Usar siempre la ruta pública estricta del entorno
                 const docRef = doc(db, 'artifacts', targetAppId, 'public', 'data', 'shares', input);
                 const snap = await getDoc(docRef);
                 
@@ -582,7 +579,6 @@
                     activeWorkspaceUid = targetUid;
                     localStorage.setItem('collabWorkspace', targetUid);
                     
-                    // ELIMINAR EL CÓDIGO (Token de un solo uso)
                     await deleteDoc(docRef);
                     
                     alert("¡Conectado exitosamente al calendario del equipo! El código ha sido invalidado por seguridad.");
@@ -610,6 +606,7 @@
             }
         };
 
+        // --- FLUJO INICIAL: AQUÍ SE ARREGLÓ EL BUG DE COLABORADOR FALSO ---
         const initDataFlow = async () => {
             initWeekdays(); updateUI();
             if (!auth || !db || isLocalFile) return;
@@ -625,7 +622,10 @@
                         return;
                     }
                     
-                    if (!activeWorkspaceUid) activeWorkspaceUid = user.uid;
+                    // Lógica segura de Identidad
+                    const storedCollab = localStorage.getItem('collabWorkspace');
+                    activeWorkspaceUid = storedCollab ? storedCollab : user.uid;
+                    
                     subscribeToWorkspace(activeWorkspaceUid);
                 });
             } catch (error) { console.error("Error iniciando el flujo de datos:", error); }
