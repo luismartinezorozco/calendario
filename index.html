@@ -182,7 +182,7 @@
                 </div>
                 <h3 class="text-xl font-black text-gray-900 mb-2">Tu Código de Equipo</h3>
                 <p class="text-sm text-gray-600 mb-4 leading-relaxed">
-                    Comparte este código con tus colaboradores. Al ingresarlo, verán y podrán editar este calendario.
+                    Comparte este código con tu colaborador. <b class="text-red-500">Este código caducará automáticamente</b> en cuanto se utilice una vez.
                 </p>
                 <div class="bg-gray-100 rounded-xl p-4 mb-6 select-all cursor-pointer border border-gray-200 border-dashed">
                     <p id="display-share-code" class="text-4xl font-black text-gray-800 tracking-[0.2em] text-center">------</p>
@@ -535,9 +535,11 @@
                 return;
             }
             
-            const code = user.uid.substring(0,6).toUpperCase();
+            // Generar código aleatorio de 6 caracteres
+            const code = Math.random().toString(36).substring(2, 8).toUpperCase();
             
             try {
+                // Usar siempre la ruta pública estricta del entorno
                 await setDoc(doc(db, 'artifacts', targetAppId, 'public', 'data', 'shares', code), {
                     targetUid: user.uid,
                     createdAt: Date.now()
@@ -571,6 +573,7 @@
             btn.disabled = true; btn.innerHTML = "Buscando...";
 
             try {
+                // Usar siempre la ruta pública estricta del entorno
                 const docRef = doc(db, 'artifacts', targetAppId, 'public', 'data', 'shares', input);
                 const snap = await getDoc(docRef);
                 
@@ -579,11 +582,14 @@
                     activeWorkspaceUid = targetUid;
                     localStorage.setItem('collabWorkspace', targetUid);
                     
-                    alert("¡Conectado exitosamente al calendario del equipo!");
+                    // ELIMINAR EL CÓDIGO (Token de un solo uso)
+                    await deleteDoc(docRef);
+                    
+                    alert("¡Conectado exitosamente al calendario del equipo! El código ha sido invalidado por seguridad.");
                     closeJoinModal();
                     subscribeToWorkspace(targetUid);
                 } else {
-                    alert("Código no encontrado. Verifica e intenta de nuevo.");
+                    alert("Código no encontrado o ya ha sido utilizado. Verifica e intenta de nuevo.");
                 }
             } catch (error) {
                 console.error("Error uniéndose:", error);
