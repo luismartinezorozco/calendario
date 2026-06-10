@@ -167,6 +167,19 @@
                 </div>
                 <div class="flex flex-col p-2 gap-1">
                     
+                    <!-- Botón: Activar Notificaciones -->
+                    <button id="btn-menu-notifications" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-left smooth-transition active:bg-gray-100">
+                        <div class="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="bell" class="w-5 h-5"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-bold text-gray-800 text-sm">Activar Notificaciones</p>
+                            <p class="text-xs text-gray-500">Recibe avisos 15 min antes</p>
+                        </div>
+                    </button>
+
+                    <div class="h-px bg-gray-100 my-1 mx-2"></div>
+                    
                     <button id="btn-menu-share" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-left smooth-transition active:bg-gray-100">
                         <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                             <i data-lucide="users" class="w-5 h-5"></i>
@@ -254,12 +267,21 @@
 
         <!-- MODAL: EDITOR DE NOTAS -->
         <div id="editor-modal" class="fixed inset-0 z-50 bg-black/50 flex items-start pt-10 sm:items-center justify-center p-4 sm:p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
-            <div id="editor-card" class="bg-white w-full max-w-sm h-[380px] sm:h-[450px] max-h-[85vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition">
-                <div class="flex items-center justify-between px-6 pb-4 pt-5 border-b border-gray-100 bg-white shrink-0">
+            <div id="editor-card" class="bg-white w-full max-w-sm h-[420px] sm:h-[480px] max-h-[85vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition">
+                <div class="flex items-center justify-between px-6 pb-2 pt-5 bg-white shrink-0">
                     <button id="btn-close-editor" class="text-gray-500 font-medium active:scale-95 smooth-transition">Cancelar</button>
                     <div id="editor-title" class="font-bold text-lg text-gray-900">Nueva Nota</div>
                     <button id="btn-save-note" class="text-red-600 font-bold active:scale-95 smooth-transition disabled:opacity-40 disabled:scale-100">Guardar</button>
                 </div>
+                
+                <!-- Selector de Hora -->
+                <div class="px-6 pb-3 pt-1 bg-white border-b border-gray-100 flex items-center justify-between shrink-0">
+                    <span class="text-sm font-bold text-gray-600 flex items-center gap-1">
+                        <i data-lucide="clock" class="w-4 h-4 text-gray-400"></i> Hora (Opcional):
+                    </span>
+                    <input type="time" id="note-time" class="p-1.5 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-red-400 font-medium bg-gray-50">
+                </div>
+
                 <div class="flex-1 bg-gray-50 p-4 flex flex-col gap-3 overflow-hidden">
                     <div class="flex justify-end shrink-0">
                         <button id="btn-paste-text" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] active:bg-gray-50 active:scale-95 smooth-transition font-bold text-sm">
@@ -320,7 +342,6 @@
             <div id="install-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition p-6 text-center relative">
                 <button id="btn-close-install" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button>
                 
-                <!-- ÍCONO MEJORADO PARA EL MODAL (Redondeado Apple y Escala 1.6x) -->
                 <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md border border-gray-100 overflow-hidden relative">
                     <img src="https://www.image2url.com/r2/default/images/1781026922099-d13a7475-7315-499f-9e3d-d3ed89fa7306.png" alt="App Icon" class="w-full h-full object-cover transform scale-[1.6]">
                 </div>
@@ -545,8 +566,19 @@
                 pText.textContent = note.content; 
                 
                 const pTime = document.createElement('p'); 
-                pTime.className = "text-gray-400 text-[11px] font-bold mt-1.5 flex items-center uppercase tracking-wider"; 
-                pTime.innerHTML = `<i data-lucide="clock" class="w-3 h-3 mr-1"></i> ${new Date(note.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+                
+                // --- MOSTRAR HORA DEL EVENTO SI EXISTE ---
+                if (note.time) {
+                    const [h, m] = note.time.split(':');
+                    const hour = parseInt(h, 10);
+                    const ampm = hour >= 12 ? 'PM' : 'AM';
+                    const hour12 = hour % 12 || 12;
+                    pTime.className = "text-red-500 text-[11px] font-bold mt-1.5 flex items-center uppercase tracking-wider"; 
+                    pTime.innerHTML = `<i data-lucide="bell" class="w-3 h-3 mr-1"></i> PROGRAMADO: ${hour12}:${m} ${ampm}`;
+                } else {
+                    pTime.className = "text-gray-400 text-[11px] font-bold mt-1.5 flex items-center uppercase tracking-wider"; 
+                    pTime.innerHTML = `<i data-lucide="clock" class="w-3 h-3 mr-1"></i> CREADO: ${new Date(note.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+                }
                 
                 textContainer.appendChild(pText); 
                 textContainer.appendChild(pTime); 
@@ -579,9 +611,11 @@
                 return;
             }
             
+            // Generar código aleatorio de 6 caracteres
             const code = Math.random().toString(36).substring(2, 8).toUpperCase();
             
             try {
+                // Usar siempre la ruta pública estricta del entorno
                 await setDoc(doc(db, 'artifacts', targetAppId, 'public', 'data', 'shares', code), {
                     targetUid: user.uid,
                     createdAt: Date.now()
@@ -615,6 +649,7 @@
             btn.disabled = true; btn.innerHTML = "Buscando...";
 
             try {
+                // Usar siempre la ruta pública estricta del entorno
                 const docRef = doc(db, 'artifacts', targetAppId, 'public', 'data', 'shares', input);
                 const snap = await getDoc(docRef);
                 
@@ -623,6 +658,7 @@
                     activeWorkspaceUid = targetUid;
                     localStorage.setItem('collabWorkspace', targetUid);
                     
+                    // ELIMINAR EL CÓDIGO (Token de un solo uso)
                     await deleteDoc(docRef);
                     
                     alert("¡Conectado exitosamente al calendario del equipo! El código ha sido invalidado por seguridad.");
@@ -650,8 +686,65 @@
             }
         };
 
+        // --- SISTEMA DE NOTIFICACIONES ---
+        const requestNotifications = async () => {
+            if (!('Notification' in window)) {
+                alert('Tu navegador no soporta notificaciones.');
+                return;
+            }
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                alert('¡Notificaciones activadas! Te avisaremos 15 minutos antes de tus eventos programados.');
+            } else {
+                alert('Permiso denegado. Puedes cambiarlo en la configuración de tu navegador o celular.');
+            }
+            closeMenu();
+        };
+
+        // El motor que revisa la hora constantemente
+        const startNotificationEngine = () => {
+            setInterval(() => {
+                if (Notification.permission === 'granted') {
+                    const now = new Date();
+                    const dateKey = formatDateKey(now);
+                    
+                    notes.forEach(note => {
+                        // Solo revisar las notas de hoy que tengan una hora configurada y que no hayan sido notificadas en esta sesión
+                        if (note.dateKey === dateKey && note.time && !note.notified) {
+                            const [h, m] = note.time.split(':').map(Number);
+                            const eventTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
+                            const diffMins = Math.floor((eventTime - now) / 60000);
+                            
+                            // Avisar exactamente 15 minutos antes
+                            if (diffMins === 15) {
+                                note.notified = true; // Evitar que se repita la notificación durante el mismo minuto
+                                
+                                const title = 'Próximo Evento (en 15 min)';
+                                const options = {
+                                    body: note.content.substring(0, 50) + '...',
+                                    icon: 'https://www.image2url.com/r2/default/images/1781026922099-d13a7475-7315-499f-9e3d-d3ed89fa7306.png',
+                                    badge: 'https://www.image2url.com/r2/default/images/1781026922099-d13a7475-7315-499f-9e3d-d3ed89fa7306.png',
+                                    vibrate: [200, 100, 200]
+                                };
+
+                                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                                    navigator.serviceWorker.ready.then(reg => {
+                                        reg.showNotification(title, options);
+                                    });
+                                } else {
+                                    new Notification(title, options);
+                                }
+                            }
+                        }
+                    });
+                }
+            }, 30000); // Revisa cada 30 segundos
+        };
+
         const initDataFlow = async () => {
             initWeekdays(); updateUI();
+            startNotificationEngine(); // Iniciar motor de notificaciones
+
             if (!auth || !db || isLocalFile) return;
 
             try {
@@ -683,9 +776,14 @@
         const saveNoteAction = async () => {
             const elTextarea = document.getElementById('note-textarea');
             const elBtnSaveNote = document.getElementById('btn-save-note');
+            const elTime = document.getElementById('note-time'); // Obtener valor del input de hora
+            
             if(!elTextarea || !elBtnSaveNote) return;
 
-            const content = elTextarea.value.trim().substring(0, 5000); const dateKey = formatDateKey(selectedDate);
+            const content = elTextarea.value.trim().substring(0, 5000); 
+            const dateKey = formatDateKey(selectedDate);
+            const timeVal = elTime ? elTime.value : '';
+
             if (!content) return;
 
             elBtnSaveNote.disabled = true; elBtnSaveNote.blur(); elBtnSaveNote.textContent = 'Guardando...';
@@ -693,11 +791,22 @@
             try {
                 if (user && activeWorkspaceUid && !isLocalFile) {
                     const notesRef = collection(db, 'artifacts', targetAppId, 'users', activeWorkspaceUid, 'notes');
-                    if (editingNoteId) await updateDoc(doc(db, 'artifacts', targetAppId, 'users', activeWorkspaceUid, 'notes', editingNoteId), { content: content, updatedAt: Date.now() });
-                    else await addDoc(notesRef, { dateKey: dateKey, content: content, createdAt: Date.now(), updatedAt: Date.now() });
+                    if (editingNoteId) {
+                        await updateDoc(doc(db, 'artifacts', targetAppId, 'users', activeWorkspaceUid, 'notes', editingNoteId), { 
+                            content: content, time: timeVal, updatedAt: Date.now() 
+                        });
+                    } else {
+                        await addDoc(notesRef, { 
+                            dateKey: dateKey, content: content, time: timeVal, createdAt: Date.now(), updatedAt: Date.now() 
+                        });
+                    }
                 } else {
-                    if (editingNoteId) { const idx = notes.findIndex(n => n.id === editingNoteId); if (idx > -1) notes[idx].content = content; } 
-                    else notes.push({ id: Date.now().toString(), dateKey: dateKey, content: content, createdAt: Date.now() });
+                    if (editingNoteId) { 
+                        const idx = notes.findIndex(n => n.id === editingNoteId); 
+                        if (idx > -1) { notes[idx].content = content; notes[idx].time = timeVal; } 
+                    } else { 
+                        notes.push({ id: Date.now().toString(), dateKey: dateKey, content: content, time: timeVal, createdAt: Date.now() }); 
+                    }
                     updateUI();
                 }
                 closeEditor();
@@ -741,7 +850,18 @@
             const [y, m, d] = previewNoteObj.dateKey.split('-');
             const eventDate = new Date(y, m - 1, d);
             const dateStr = `${DAY_NAMES[eventDate.getDay()]}, ${eventDate.getDate()} de ${MONTH_NAMES[eventDate.getMonth()]}`;
-            const textToShare = `📅 *Evento el ${dateStr}*\n\n${previewNoteObj.content}`;
+            
+            // Añadir hora al mensaje si existe
+            let timeStr = "";
+            if (previewNoteObj.time) {
+                const [h, min] = previewNoteObj.time.split(':');
+                const hour = parseInt(h, 10);
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                const hour12 = hour % 12 || 12;
+                timeStr = ` a las ${hour12}:${min} ${ampm}`;
+            }
+
+            const textToShare = `📅 *Evento el ${dateStr}${timeStr}*\n\n${previewNoteObj.content}`;
 
             if (navigator.share) {
                 try { await navigator.share({ title: 'Evento', text: textToShare }); } 
@@ -781,15 +901,18 @@
             setTimeout(() => cardEditor?.classList.replace('scale-95', 'scale-100'), 10); 
             
             const elTextarea = document.getElementById('note-textarea');
+            const elTime = document.getElementById('note-time');
             const editorTitle = document.getElementById('editor-title');
 
             if (note) { 
                 editingNoteId = note.id; 
                 if(elTextarea) elTextarea.value = note.content; 
+                if(elTime) elTime.value = note.time || '';
                 if(editorTitle) editorTitle.textContent = 'Editar Evento'; 
             } else { 
                 editingNoteId = null; 
                 if(elTextarea) elTextarea.value = ''; 
+                if(elTime) elTime.value = '';
                 if(editorTitle) editorTitle.textContent = 'Nueva Nota'; 
             } 
             validateTextarea(); 
@@ -800,7 +923,9 @@
                 modalEditor?.classList.add('opacity-0', 'pointer-events-none'); 
                 editingNoteId = null; 
                 const elTextarea = document.getElementById('note-textarea');
+                const elTime = document.getElementById('note-time');
                 if(elTextarea) elTextarea.value = ''; 
+                if(elTime) elTime.value = '';
                 document.getElementById('main-scroll-area')?.classList.replace('overflow-hidden', 'overflow-y-auto'); 
             }, 200); 
         };
@@ -893,6 +1018,7 @@
         
         bindEvent('btn-open-menu', 'click', openMenu);
         bindEvent('btn-close-menu', 'click', closeMenu);
+        bindEvent('btn-menu-notifications', 'click', requestNotifications); // Evento de Notificaciones
         bindEvent('btn-menu-share', 'click', generateShareCode);
         bindEvent('btn-menu-leave', 'click', leaveWorkspace);
         bindEvent('btn-menu-join', 'click', () => {
