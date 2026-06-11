@@ -165,6 +165,7 @@
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
+                
                 <div class="flex flex-col p-2 gap-1">
                     
                     <button id="btn-menu-share" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-left smooth-transition active:bg-gray-100">
@@ -209,8 +210,16 @@
                             <p class="text-xs text-gray-500">Agrega el calendario a tu inicio</p>
                         </div>
                     </button>
-
                 </div>
+                
+                <!-- CRÉDITOS Y VERSIÓN -->
+                <div class="mt-2 pt-3 pb-2 border-t border-gray-100 flex flex-col items-center justify-center">
+                    <a href="https://instagram.com/eqbstudios" target="_blank" rel="noopener noreferrer" class="text-gray-700 hover:text-red-600 font-bold text-sm flex items-center gap-1.5 smooth-transition">
+                        <i data-lucide="instagram" class="w-4 h-4"></i> Instagram: @eqbstudios
+                    </a>
+                    <p class="text-[11px] text-gray-400 font-medium mt-1">Versión 2.1</p>
+                </div>
+                
             </div>
         </div>
 
@@ -546,9 +555,9 @@
                 
                 const pTime = document.createElement('p'); 
                 
-                // Mostrar siempre un recordatorio fijo
-                pTime.className = "text-red-500 text-[11px] font-bold mt-1.5 flex items-center uppercase tracking-wider"; 
-                pTime.innerHTML = `<i data-lucide="bell" class="w-3 h-3 mr-1"></i> RECORDATORIO: 8:00 AM`;
+                // Mostrar solo la hora de creación, limpio y minimalista
+                pTime.className = "text-gray-400 text-[11px] font-bold mt-1.5 flex items-center uppercase tracking-wider"; 
+                pTime.innerHTML = `<i data-lucide="clock" class="w-3 h-3 mr-1"></i> Creado: ${new Date(note.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
                 
                 textContainer.appendChild(pText); 
                 textContainer.appendChild(pTime); 
