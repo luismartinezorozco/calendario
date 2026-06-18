@@ -85,19 +85,38 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .smooth-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        /* --- MOTOR DE MODO OSCURO (V2.2) --- */
-        body.dark-mode { background-color: #111827 !important; }
+        /* --- MOTOR DE MODO OSCURO MEJORADO (V2.3) --- */
+        body.dark-mode { background-color: #111827 !important; color: #f3f4f6 !important; }
         .dark-mode .bg-\[\#f4f5f7\] { background-color: #111827 !important; }
+        .dark-mode .bg-\[\#f4f5f7\]\/90 { background-color: rgba(17, 24, 39, 0.9) !important; } /* Fix sticky header opacity */
         .dark-mode .bg-white { background-color: #1f2937 !important; }
+        
+        /* Textos */
         .dark-mode .text-gray-900, .dark-mode .text-gray-800, .dark-mode .text-gray-700 { color: #f3f4f6 !important; }
         .dark-mode .text-gray-600, .dark-mode .text-gray-500 { color: #9ca3af !important; }
-        .dark-mode .border-gray-100, .dark-mode .border-gray-200 { border-color: #374151 !important; }
+        .dark-mode .text-gray-400 { color: #6b7280 !important; }
+        
+        /* Bordes y Fondos secundarios */
+        .dark-mode .border-gray-100, .dark-mode .border-gray-200, .dark-mode .border-dashed { border-color: #374151 !important; }
         .dark-mode .bg-gray-50, .dark-mode .bg-gray-100 { background-color: #374151 !important; }
         .dark-mode .bg-gray-200 { background-color: #4b5563 !important; }
-        .dark-mode .hover\:bg-gray-100:hover { background-color: #4b5563 !important; }
-        .dark-mode .hover\:bg-gray-50:hover { background-color: #374151 !important; }
-        .dark-mode input, .dark-mode textarea { background-color: #1f2937 !important; color: #f3f4f6 !important; border-color: #4b5563 !important; }
+        
+        /* Efectos Hover y Active */
+        .dark-mode .hover\:bg-gray-100:hover, .dark-mode .active\:bg-gray-100:active { background-color: #4b5563 !important; }
+        .dark-mode .hover\:bg-gray-50:hover, .dark-mode .active\:bg-gray-50:active { background-color: #4b5563 !important; }
+        .dark-mode .group:hover .group-hover\:bg-gray-100 { background-color: #374151 !important; } /* Fix hover de los cuadritos */
+        
+        /* Inputs y Textareas */
+        .dark-mode input, .dark-mode textarea { background-color: #111827 !important; color: #f3f4f6 !important; border-color: #4b5563 !important; }
+        
+        /* Sombras */
         .dark-mode .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important; }
+        
+        /* Modificadores de Degradado para modales */
+        .dark-mode .bg-gradient-to-b.from-white { background-image: linear-gradient(to bottom, #1f2937, transparent) !important; }
+        .dark-mode .bg-gradient-to-t.from-white { background-image: linear-gradient(to top, #1f2937, transparent) !important; }
+        
+        /* Botones oscuros principales a un tono azul/morado más visible en dark mode */
         .dark-mode .bg-gray-900 { background-color: #3b82f6 !important; color: white !important; } 
         
         /* Ajuste de colores translúcidos para iconos en fondo oscuro */
@@ -259,7 +278,7 @@
                     <a href="https://instagram.com/eqbstudio" target="_blank" rel="noopener noreferrer" class="text-gray-700 hover:text-red-600 font-bold text-sm flex items-center gap-1.5 smooth-transition">
                         <i data-lucide="instagram" class="w-4 h-4"></i> Instagram: @eqbstudio
                     </a>
-                    <p class="text-[11px] text-gray-400 font-medium mt-1">Versión 2.2</p>
+                    <p class="text-[11px] text-gray-400 font-medium mt-1">Versión 2.3</p>
                 </div>
                 
             </div>
@@ -677,7 +696,7 @@
             }
         };
 
-        // --- SISTEMA DE MODO OSCURO (V2.2) ---
+        // --- SISTEMA DE MODO OSCURO (V2.3) ---
         const initTheme = () => {
             const isDark = localStorage.getItem('darkMode') === 'true';
             if (isDark) {
