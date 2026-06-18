@@ -1058,6 +1058,60 @@
         bindModalBg(modalSync, closeSync);
         bindModalBg(modalInstall, closeInstallModal);
 
+        // --- SISTEMA DE DESLIZAMIENTO (SWIPE) PARA CAMBIAR DE MES ---
+        let touchStartX = 0;
+        let touchEndX = 0;
+        let touchStartY = 0;
+        let touchEndY = 0;
+
+        const calendarWrapper = document.getElementById('calendar-grid').parentElement;
+        if (calendarWrapper) {
+            calendarWrapper.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, { passive: true });
+
+            calendarWrapper.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                touchEndY = e.changedTouches[0].screenY;
+                
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+                
+                // Ignorar si el usuario está haciendo scroll vertical (prioridad a las notas)
+                if (Math.abs(deltaY) > Math.abs(deltaX)) return;
+                
+                const threshold = 50; // Distancia mínima para detectar el deslizamiento
+                const gridElement = document.getElementById('calendar-grid');
+
+                if (deltaX < -threshold) {
+                    // Deslizar izquierda (Mes Siguiente)
+                    if(gridElement) { gridElement.style.opacity = '0.3'; gridElement.style.transform = 'translateX(-15px)'; }
+                    setTimeout(() => {
+                        currentDate.setDate(1);
+                        currentDate.setMonth(currentDate.getMonth() + 1);
+                        updateUI();
+                        if(gridElement) { gridElement.style.opacity = '1'; gridElement.style.transform = 'translateX(0)'; }
+                    }, 120);
+                } else if (deltaX > threshold) {
+                    // Deslizar derecha (Mes Anterior)
+                    if(gridElement) { gridElement.style.opacity = '0.3'; gridElement.style.transform = 'translateX(15px)'; }
+                    setTimeout(() => {
+                        currentDate.setDate(1);
+                        currentDate.setMonth(currentDate.getMonth() - 1);
+                        updateUI();
+                        if(gridElement) { gridElement.style.opacity = '1'; gridElement.style.transform = 'translateX(0)'; }
+                    }, 120);
+                }
+            }, { passive: true });
+            
+            // Añadir transición suave al grid para un efecto nativo
+            const gridElement = document.getElementById('calendar-grid');
+            if(gridElement) {
+                gridElement.style.transition = 'opacity 0.15s ease-out, transform 0.15s ease-out';
+            }
+        }
+
         // Arrancar
         initDataFlow();
 
