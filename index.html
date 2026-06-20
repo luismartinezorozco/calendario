@@ -6,33 +6,31 @@
     <title>Calendario Eventos</title>
     
     <!-- Meta tags PWA -->
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#050505">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Calendario">
     
     <!-- Favicons -->
-    <link rel="icon" type="image/jpeg" href="https://www.image2url.com/r2/default/images/1781828050288-9556b8a9-c7b2-4985-9b99-269d4b7af056.jpg">
-    
-    <!-- Ícono para iOS -->
-    <link rel="apple-touch-icon" href="https://www.image2url.com/r2/default/images/1781828050288-9556b8a9-c7b2-4985-9b99-269d4b7af056.jpg">
+    <link rel="icon" type="image/png" href="https://www.image2url.com/r2/default/images/1781828050288-9556b8a9-c7b2-4985-9b99-269d4b7af056.jpg">
+    <link id="apple-touch-icon" rel="apple-touch-icon" href="https://www.image2url.com/r2/default/images/1781828050288-9556b8a9-c7b2-4985-9b99-269d4b7af056.jpg">
     
     <!-- Manifest dinámico -->
     <link id="manifest-link" rel="manifest" href="">
     
     <script>
-        const appIconUrl = "https://www.image2url.com/r2/default/images/1781828050288-9556b8a9-c7b2-4985-9b99-269d4b7af056.jpg";
+        const originalIcon = "https://www.image2url.com/r2/default/images/1781828050288-9556b8a9-c7b2-4985-9b99-269d4b7af056.jpg";
 
-        document.addEventListener('DOMContentLoaded', () => {
+        const updateManifestAndIcon = (iconUrl) => {
             const manifestJSON = {
                 "name": "Calendario de Eventos",
                 "short_name": "Calendario",
                 "start_url": window.location.pathname,
                 "display": "standalone",
-                "background_color": "#f4f5f7",
-                "theme_color": "#ffffff",
+                "background_color": "#050505",
+                "theme_color": "#050505",
                 "icons": [{
-                    "src": appIconUrl,
+                    "src": iconUrl,
                     "sizes": "512x512",
                     "type": "image/jpeg",
                     "purpose": "any maskable"
@@ -41,6 +39,10 @@
             const manifestBlob = new Blob([JSON.stringify(manifestJSON)], { type: 'application/manifest+json' });
             const link = document.getElementById('manifest-link');
             if (link) link.href = URL.createObjectURL(manifestBlob);
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateManifestAndIcon(originalIcon); 
         });
     </script>
 
@@ -53,46 +55,52 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .smooth-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        /* --- MOTOR DE MODO OSCURO MEJORADO (V2.4) --- */
-        body.dark-mode { background-color: #111827 !important; color: #f3f4f6 !important; }
-        .dark-mode .bg-\[\#f4f5f7\] { background-color: #111827 !important; }
-        .dark-mode .bg-\[\#f4f5f7\]\/90 { background-color: rgba(17, 24, 39, 0.9) !important; } /* Fix sticky header opacity */
-        .dark-mode .bg-white { background-color: #1f2937 !important; }
+        /* --- MOTOR DE MODO OSCURO (V2.5) - TEMA "CONTABITO" --- */
+        body.dark-mode { background-color: #050505 !important; color: #f3f4f6 !important; }
+        .dark-mode .bg-\[\#f4f5f7\] { background-color: #050505 !important; }
+        .dark-mode .bg-\[\#f4f5f7\]\/90 { background-color: rgba(5, 5, 5, 0.8) !important; backdrop-filter: blur(12px); border-bottom: 1px solid #1a1a1a; } 
+        .dark-mode .bg-white { background-color: #121212 !important; border-color: #1e1e1e !important; }
         
         /* Textos */
-        .dark-mode .text-gray-900, .dark-mode .text-gray-800, .dark-mode .text-gray-700 { color: #f3f4f6 !important; }
-        .dark-mode .text-gray-600, .dark-mode .text-gray-500 { color: #9ca3af !important; }
-        .dark-mode .text-gray-400 { color: #6b7280 !important; }
+        .dark-mode .text-gray-900, .dark-mode .text-gray-800, .dark-mode .text-gray-700 { color: #fdfdfd !important; }
+        .dark-mode .text-gray-600, .dark-mode .text-gray-500 { color: #a3a3a3 !important; }
+        .dark-mode .text-gray-400 { color: #737373 !important; }
         
         /* Bordes y Fondos secundarios */
-        .dark-mode .border-gray-100, .dark-mode .border-gray-200, .dark-mode .border-dashed { border-color: #374151 !important; }
-        .dark-mode .bg-gray-50, .dark-mode .bg-gray-100 { background-color: #374151 !important; }
-        .dark-mode .bg-gray-200 { background-color: #4b5563 !important; }
+        .dark-mode .border-gray-100, .dark-mode .border-gray-200, .dark-mode .border-dashed { border-color: #1e1e1e !important; }
+        .dark-mode .bg-gray-50, .dark-mode .bg-gray-100 { background-color: #1a1a1a !important; }
+        .dark-mode .bg-gray-200 { background-color: #262626 !important; }
         
         /* Efectos Hover y Active */
-        .dark-mode .hover\:bg-gray-100:hover, .dark-mode .active\:bg-gray-100:active { background-color: #4b5563 !important; }
-        .dark-mode .hover\:bg-gray-50:hover, .dark-mode .active\:bg-gray-50:active { background-color: #4b5563 !important; }
-        .dark-mode .group:hover .group-hover\:bg-gray-100 { background-color: #374151 !important; } /* Fix hover de los cuadritos */
+        .dark-mode .hover\:bg-gray-100:hover, .dark-mode .active\:bg-gray-100:active { background-color: #262626 !important; }
+        .dark-mode .hover\:bg-gray-50:hover, .dark-mode .active\:bg-gray-50:active { background-color: #262626 !important; }
+        .dark-mode .group:hover .group-hover\:bg-gray-100 { background-color: #1a1a1a !important; }
         
         /* Inputs y Textareas */
-        .dark-mode input, .dark-mode textarea { background-color: #111827 !important; color: #f3f4f6 !important; border-color: #4b5563 !important; }
+        .dark-mode input, .dark-mode textarea { background-color: #0a0a0a !important; color: #ffffff !important; border-color: #262626 !important; }
+        .dark-mode input:focus, .dark-mode textarea:focus { border-color: #f97316 !important; box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2) !important; }
         
-        /* Sombras */
-        .dark-mode .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important; }
+        /* Sombras estilo Neón/Dark */
+        .dark-mode .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 1) !important; }
+        .dark-mode .shadow-\[0_4px_20px_rgba\(0\,0\,0\,0\.03\)\] { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6) !important; }
+        .dark-mode .shadow-\[0_2px_10px_rgba\(0\,0\,0\,0\.04\)\] { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important; }
         
         /* Modificadores de Degradado para modales */
-        .dark-mode .bg-gradient-to-b.from-white { background-image: linear-gradient(to bottom, #1f2937, transparent) !important; }
-        .dark-mode .bg-gradient-to-t.from-white { background-image: linear-gradient(to top, #1f2937, transparent) !important; }
+        .dark-mode .bg-gradient-to-b.from-white { background-image: linear-gradient(to bottom, #121212, transparent) !important; }
+        .dark-mode .bg-gradient-to-t.from-white { background-image: linear-gradient(to top, #121212, transparent) !important; }
         
-        /* Botones oscuros principales a un tono azul/morado más visible en dark mode */
-        .dark-mode .bg-gray-900 { background-color: #3b82f6 !important; color: white !important; } 
+        /* Botones oscuros principales -> Naranja Contabito */
+        .dark-mode .bg-gray-900 { background-color: #f97316 !important; color: #000000 !important; font-weight: 900 !important; border: none !important;} 
         
-        /* Ajuste de colores translúcidos para iconos en fondo oscuro */
-        .dark-mode .bg-red-50 { background-color: rgba(239, 68, 68, 0.15) !important; }
-        .dark-mode .bg-blue-50 { background-color: rgba(59, 130, 246, 0.15) !important; }
-        .dark-mode .bg-green-50 { background-color: rgba(16, 185, 129, 0.15) !important; }
-        .dark-mode .bg-orange-50 { background-color: rgba(249, 115, 22, 0.15) !important; }
-        .dark-mode .bg-purple-50 { background-color: rgba(168, 85, 247, 0.15) !important; }
+        /* Ajuste de colores translúcidos (Todos al ecosistema Naranja) */
+        .dark-mode .bg-orange-50, .dark-mode .bg-blue-50, .dark-mode .bg-green-50, .dark-mode .bg-purple-50 { background-color: rgba(249, 115, 22, 0.1) !important; }
+        .dark-mode .text-orange-500, .dark-mode .text-orange-600, .dark-mode .text-blue-500, .dark-mode .text-blue-600, .dark-mode .text-green-600, .dark-mode .text-purple-600 { color: #f97316 !important; }
+        
+        /* Modificadores de Calendario */
+        .dark-mode .today-circle { background-color: rgba(249, 115, 22, 0.15) !important; color: #f97316 !important; }
+        .dark-mode .selected-circle { background-color: #f97316 !important; color: #000000 !important; font-weight: 900 !important; }
+        .dark-mode .calendar-dot { background-color: #f97316 !important; }
+        .dark-mode .calendar-dot-selected { background-color: #000000 !important; }
     </style>
 </head>
 <body class="font-sans h-screen w-screen overflow-hidden flex justify-center items-center fixed inset-0 select-none">
@@ -101,7 +109,7 @@
     <div class="w-full max-w-md h-full bg-[#f4f5f7] flex flex-col relative overflow-hidden shadow-2xl sm:h-[90vh] sm:rounded-[2.5rem] sm:border-[8px] sm:border-gray-900 bg-cover bg-center smooth-transition">
         
         <!-- HEADER BLANCO CURVO -->
-        <div class="bg-white rounded-b-[2rem] shadow-[0_4px_20px_rgba(0,0,0,0.03)] z-20 relative pb-2 smooth-transition">
+        <div class="bg-white rounded-b-[2rem] shadow-[0_4px_20px_rgba(0,0,0,0.03)] z-20 relative pb-2 smooth-transition border-b border-transparent">
             
             <!-- Barra Superior -->
             <div class="flex items-center justify-between pt-6 pb-2 px-5">
@@ -109,23 +117,23 @@
                 <!-- TÍTULO INTERACTIVO CON SELECTOR DE FECHA NATIVO -->
                 <div class="flex flex-col">
                     <div class="flex items-center gap-1 relative cursor-pointer group">
-                        <h2 id="month-title" class="text-2xl font-black text-gray-800 capitalize tracking-tight group-hover:text-red-600 smooth-transition">Mes, Año</h2>
-                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 group-hover:text-red-600 smooth-transition"></i>
+                        <h2 id="month-title" class="text-2xl font-black text-gray-800 capitalize tracking-tight group-hover:text-orange-500 smooth-transition">Mes, Año</h2>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 group-hover:text-orange-500 smooth-transition"></i>
                         <input type="month" id="month-picker" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="Seleccionar mes">
                     </div>
                     <!-- Badge de Colaborador -->
-                    <span id="collab-badge" class="hidden text-[10px] font-bold text-red-500 uppercase tracking-widest mt-0.5">🗓️ Modo Colaborador</span>
+                    <span id="collab-badge" class="hidden text-[10px] font-bold text-orange-500 uppercase tracking-widest mt-0.5">🗓️ Modo Colaborador</span>
                 </div>
                 
                 <div class="flex items-center gap-1">
                     <!-- Botón Instalar App (PWA) - Oculto por defecto -->
-                    <button id="btn-install-header" class="hidden p-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-full smooth-transition active:scale-95" title="Instalar como App">
+                    <button id="btn-install-header" class="hidden p-2 bg-orange-50 text-orange-500 hover:bg-orange-100 rounded-full smooth-transition active:scale-95" title="Instalar como App">
                         <i data-lucide="download" class="w-5 h-5"></i>
                     </button>
 
-                    <button id="btn-sync" class="mr-1 p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-full smooth-transition active:scale-95 relative" title="Respaldar en la nube">
+                    <button id="btn-sync" class="mr-1 p-2 bg-orange-50 text-orange-500 hover:bg-orange-100 rounded-full smooth-transition active:scale-95 relative" title="Respaldar en la nube">
                         <i id="sync-icon" data-lucide="cloud-off" class="w-5 h-5 text-gray-500"></i>
-                        <span id="sync-badge" class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
+                        <span id="sync-badge" class="absolute top-1 right-1 w-2.5 h-2.5 bg-orange-500 border-2 border-white rounded-full"></span>
                     </button>
 
                     <button id="btn-today" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-full smooth-transition active:scale-95">
@@ -155,15 +163,15 @@
         </div>
 
         <!-- BOTÓN DE ACCIÓN FLOTANTE (FAB) -->
-        <button id="btn-add-event" class="absolute bottom-6 right-6 w-14 h-14 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-[0_8px_20px_rgba(220,38,38,0.4)] flex items-center justify-center z-30 smooth-transition active:scale-90 active:shadow-md">
+        <button id="btn-add-event" class="absolute bottom-6 right-6 w-14 h-14 bg-orange-500 hover:bg-orange-600 text-white rounded-full shadow-[0_8px_20px_rgba(249,115,22,0.4)] flex items-center justify-center z-30 smooth-transition active:scale-90 active:shadow-md border border-orange-400/30">
             <i data-lucide="plus" class="w-7 h-7"></i>
         </button>
 
         <!-- ================= MODALES ================= -->
 
         <!-- MODAL: MENÚ PRINCIPAL -->
-        <div id="menu-modal" class="fixed inset-0 z-50 bg-black/50 flex items-start pt-20 sm:items-center justify-center p-4 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
-            <div id="menu-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition p-2">
+        <div id="menu-modal" class="fixed inset-0 z-50 bg-black/60 flex items-start pt-20 sm:items-center justify-center p-4 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
+            <div id="menu-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition p-2 border border-gray-100">
                 <div class="flex items-center justify-between px-4 pt-3 pb-2 border-b border-gray-100">
                     <h3 class="font-bold text-gray-900 text-lg">Menú Principal</h3>
                     <button id="btn-close-menu" class="p-2 text-gray-400 hover:text-gray-600 bg-gray-50 rounded-full active:scale-95 smooth-transition">
@@ -173,32 +181,21 @@
                 
                 <div class="flex flex-col p-2 gap-1">
                     
-                    <!-- Botón: Activar Notificaciones -->
-                    <button id="btn-menu-notifications" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-left smooth-transition active:bg-gray-100">
-                        <div class="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center shrink-0">
-                            <i data-lucide="bell" class="w-5 h-5"></i>
-                        </div>
-                        <div class="flex-1">
-                            <p class="font-bold text-gray-800 text-sm">Activar Notificaciones</p>
-                            <p class="text-xs text-gray-500">Recibe avisos 15 min antes</p>
-                        </div>
-                    </button>
-
                     <!-- Botón: Modo Oscuro -->
                     <button id="btn-toggle-theme" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-left smooth-transition active:bg-gray-100">
                         <div class="w-10 h-10 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center shrink-0" id="theme-icon-bg">
-                            <i data-lucide="moon" class="w-5 h-5" id="theme-icon"></i>
+                            <i data-lucide="sun" class="w-5 h-5" id="theme-icon"></i>
                         </div>
                         <div class="flex-1">
-                            <p class="font-bold text-gray-800 text-sm" id="theme-text">Modo Oscuro</p>
-                            <p class="text-xs text-gray-500">Apariencia nocturna</p>
+                            <p class="font-bold text-gray-800 text-sm" id="theme-text">Modo Claro</p>
+                            <p class="text-xs text-gray-500">Apariencia diurna</p>
                         </div>
                     </button>
 
                     <div class="h-px bg-gray-100 my-1 mx-2"></div>
                     
                     <button id="btn-menu-share" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-left smooth-transition active:bg-gray-100">
-                        <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                        <div class="w-10 h-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center shrink-0">
                             <i data-lucide="users" class="w-5 h-5"></i>
                         </div>
                         <div class="flex-1">
@@ -208,7 +205,7 @@
                     </button>
 
                     <button id="btn-menu-join" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-left smooth-transition active:bg-gray-100">
-                        <div class="w-10 h-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
+                        <div class="w-10 h-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center shrink-0">
                             <i data-lucide="key" class="w-5 h-5"></i>
                         </div>
                         <div class="flex-1">
@@ -231,7 +228,7 @@
 
                     <!-- Botón: Instalar App PWA -->
                     <button id="btn-install" class="hidden w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-left smooth-transition active:bg-gray-100">
-                        <div class="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                        <div class="w-10 h-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center shrink-0">
                             <i data-lucide="download" class="w-5 h-5"></i>
                         </div>
                         <div class="flex-1">
@@ -243,25 +240,25 @@
                 
                 <!-- CRÉDITOS Y VERSIÓN -->
                 <div class="mt-2 pt-3 pb-2 border-t border-gray-100 flex flex-col items-center justify-center">
-                    <a href="https://instagram.com/eqbstudio" target="_blank" rel="noopener noreferrer" class="text-gray-700 hover:text-red-600 font-bold text-sm flex items-center gap-1.5 smooth-transition">
+                    <a href="https://instagram.com/eqbstudio" target="_blank" rel="noopener noreferrer" class="text-gray-700 hover:text-orange-500 font-bold text-sm flex items-center gap-1.5 smooth-transition">
                         <i data-lucide="instagram" class="w-4 h-4"></i> Instagram: @eqbstudio
                     </a>
-                    <p class="text-[11px] text-gray-400 font-medium mt-1">Versión 2.4</p>
+                    <p class="text-[11px] text-gray-400 font-medium mt-1">Versión 2.5</p>
                 </div>
                 
             </div>
         </div>
 
         <!-- MODAL: MOSTRAR CÓDIGO (DUEÑO) -->
-        <div id="share-code-modal" class="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
-            <div id="share-code-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition p-6 text-center relative">
+        <div id="share-code-modal" class="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
+            <div id="share-code-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition p-6 text-center relative border border-gray-100">
                 <button id="btn-close-share-code" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button>
-                <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-500">
+                <div class="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-500">
                     <i data-lucide="share-2" class="w-8 h-8"></i>
                 </div>
                 <h3 class="text-xl font-black text-gray-900 mb-2">Tu Código de Equipo</h3>
                 <p class="text-sm text-gray-600 mb-4 leading-relaxed">
-                    Comparte este código con tu colaborador. <b class="text-red-500">Este código caducará automáticamente</b> en cuanto se utilice una vez.
+                    Comparte este código con tu colaborador. <b class="text-orange-500">Este código caducará automáticamente</b> en cuanto se utilice una vez.
                 </p>
                 <div class="bg-gray-100 rounded-xl p-4 mb-6 select-all cursor-pointer border border-gray-200 border-dashed">
                     <p id="display-share-code" class="text-4xl font-black text-gray-800 tracking-[0.2em] text-center">------</p>
@@ -273,8 +270,8 @@
         </div>
 
         <!-- MODAL: INGRESAR CÓDIGO (COLABORADOR) -->
-        <div id="join-code-modal" class="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
-            <div id="join-code-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition p-6 text-center relative">
+        <div id="join-code-modal" class="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
+            <div id="join-code-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition p-6 text-center relative border border-gray-100">
                 <button id="btn-close-join-code" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button>
                 <div class="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-500">
                     <i data-lucide="log-in" class="w-8 h-8"></i>
@@ -283,47 +280,47 @@
                 <p class="text-sm text-gray-600 mb-4 leading-relaxed">
                     Ingresa el código de 6 caracteres que te proporcionó el administrador del calendario.
                 </p>
-                <input type="text" id="input-join-code" maxlength="6" placeholder="EJ: A1B2C3" class="w-full text-center text-3xl font-black tracking-[0.2em] uppercase bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 smooth-transition text-gray-800">
-                <button id="btn-submit-join" class="w-full py-3 bg-orange-600 text-white font-bold rounded-xl active:scale-95 smooth-transition flex items-center justify-center gap-2">
+                <input type="text" id="input-join-code" maxlength="6" placeholder="EJ: A1B2C3" class="w-full text-center text-3xl font-black tracking-[0.2em] uppercase bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 smooth-transition text-gray-800">
+                <button id="btn-submit-join" class="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl active:scale-95 smooth-transition flex items-center justify-center gap-2">
                     Conectar <i data-lucide="arrow-right" class="w-5 h-5"></i>
                 </button>
             </div>
         </div>
 
         <!-- MODAL: EDITOR DE NOTAS -->
-        <div id="editor-modal" class="fixed inset-0 z-50 bg-black/50 flex items-start pt-10 sm:items-center justify-center p-4 sm:p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
-            <div id="editor-card" class="bg-white w-full max-w-sm h-[380px] sm:h-[450px] max-h-[85vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition">
+        <div id="editor-modal" class="fixed inset-0 z-50 bg-black/70 flex items-start pt-10 sm:items-center justify-center p-4 sm:p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
+            <div id="editor-card" class="bg-white w-full max-w-sm h-[380px] sm:h-[450px] max-h-[85vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition border border-gray-100">
                 <div class="flex items-center justify-between px-6 pb-4 pt-5 bg-white border-b border-gray-100 shrink-0">
-                    <button id="btn-close-editor" class="text-gray-500 font-medium active:scale-95 smooth-transition">Cancelar</button>
+                    <button id="btn-close-editor" class="text-gray-500 hover:text-gray-700 font-medium active:scale-95 smooth-transition">Cancelar</button>
                     <div id="editor-title" class="font-bold text-lg text-gray-900">Nueva Nota</div>
-                    <button id="btn-save-note" class="text-red-600 font-bold active:scale-95 smooth-transition disabled:opacity-40 disabled:scale-100">Guardar</button>
+                    <button id="btn-save-note" class="text-orange-500 hover:text-orange-600 font-bold active:scale-95 smooth-transition disabled:opacity-40 disabled:scale-100">Guardar</button>
                 </div>
 
                 <div class="flex-1 bg-gray-50 p-4 flex flex-col gap-3 overflow-hidden">
                     <div class="flex justify-end shrink-0">
-                        <button id="btn-paste-text" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] active:bg-gray-50 active:scale-95 smooth-transition font-bold text-sm">
-                            <i data-lucide="clipboard-paste" class="w-4 h-4 text-blue-600"></i> Pegar texto
+                        <button id="btn-paste-text" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] active:bg-gray-50 active:scale-95 smooth-transition font-bold text-sm hover:border-orange-500/30 hover:text-orange-500">
+                            <i data-lucide="clipboard-paste" class="w-4 h-4"></i> Pegar texto
                         </button>
                     </div>
-                    <textarea id="note-textarea" maxlength="5000" placeholder="Pega el texto aquí..." class="w-full flex-1 p-5 bg-white border border-gray-200 rounded-2xl shadow-sm resize-none focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 text-lg text-gray-800 placeholder-gray-400 leading-relaxed"></textarea>
+                    <textarea id="note-textarea" maxlength="5000" placeholder="Pega el texto aquí..." class="w-full flex-1 p-5 bg-white border border-gray-200 rounded-2xl shadow-sm resize-none focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 text-lg text-gray-800 placeholder-gray-400 leading-relaxed smooth-transition"></textarea>
                 </div>
             </div>
         </div>
 
         <!-- MODAL: VISTA PREVIA -->
-        <div id="preview-modal" class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
-            <div id="preview-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition">
+        <div id="preview-modal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
+            <div id="preview-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition border border-gray-100">
                 <div class="p-6 max-h-[60vh] overflow-y-auto no-scrollbar relative">
                     <div class="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-white to-transparent pointer-events-none"></div>
                     <p id="preview-text" class="text-gray-800 text-[15px] sm:text-base whitespace-pre-wrap font-medium leading-relaxed pt-2"></p>
                     <div class="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
                 </div>
                 <div class="bg-gray-50 p-4 flex flex-col gap-3 border-t border-gray-100">
-                    <button id="btn-preview-share" class="w-full py-3 text-blue-700 font-bold bg-blue-50 border border-blue-100 hover:bg-blue-100 rounded-xl smooth-transition active:scale-95 flex items-center justify-center gap-2">
+                    <button id="btn-preview-share" class="w-full py-3 text-orange-500 font-bold bg-orange-50 border border-orange-100 hover:bg-orange-100 rounded-xl smooth-transition active:scale-95 flex items-center justify-center gap-2">
                         <i data-lucide="share-2" class="w-5 h-5"></i> Compartir Evento
                     </button>
                     <div id="preview-actions" class="grid grid-cols-2 gap-3">
-                        <button id="btn-preview-delete" class="py-3.5 text-red-600 font-bold bg-white border border-gray-200 rounded-xl smooth-transition active:bg-red-50 active:scale-95 flex items-center justify-center gap-2">
+                        <button id="btn-preview-delete" class="py-3.5 text-red-600 font-bold bg-white border border-gray-200 rounded-xl smooth-transition active:bg-red-50 active:scale-95 flex items-center justify-center gap-2 hover:border-red-200">
                             <i data-lucide="trash-2" class="w-4 h-4"></i> Borrar
                         </button>
                         <button id="btn-preview-edit" class="py-3.5 text-white font-bold bg-gray-900 rounded-xl smooth-transition active:bg-gray-800 active:scale-95 flex items-center justify-center gap-2">
@@ -331,17 +328,17 @@
                         </button>
                     </div>
                 </div>
-                <button id="btn-close-preview" class="absolute top-4 right-4 w-8 h-8 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center smooth-transition active:bg-gray-200 active:scale-90">
+                <button id="btn-close-preview" class="absolute top-4 right-4 w-8 h-8 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center smooth-transition active:bg-gray-200 active:scale-90 hover:text-orange-500">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
         </div>
 
         <!-- MODAL: SINCRONIZACIÓN GOOGLE -->
-        <div id="sync-modal" class="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
-            <div id="sync-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition p-6 text-center relative">
+        <div id="sync-modal" class="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
+            <div id="sync-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition p-6 text-center relative border border-gray-100">
                 <button id="btn-close-sync" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button>
-                <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-500">
+                <div class="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-500">
                     <i data-lucide="cloud" class="w-8 h-8"></i>
                 </div>
                 <h3 id="sync-title" class="text-xl font-black text-gray-900 mb-2">Respaldar Calendario</h3>
@@ -355,8 +352,8 @@
         </div>
 
         <!-- MODAL: INSTALAR APP (PWA) -->
-        <div id="install-modal" class="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
-            <div id="install-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition p-6 text-center relative">
+        <div id="install-modal" class="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-5 backdrop-blur-sm opacity-0 pointer-events-none smooth-transition sm:absolute sm:rounded-[2.5rem]">
+            <div id="install-card" class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transform scale-95 smooth-transition p-6 text-center relative border border-gray-100">
                 <button id="btn-close-install" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button>
                 
                 <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md border border-gray-100 overflow-hidden relative">
@@ -506,9 +503,9 @@
             const btnSync = document.getElementById('btn-sync');
             if (btnSync) {
                 if (user && !user.isAnonymous) {
-                    btnSync.innerHTML = `<i data-lucide="cloud-check" class="w-5 h-5 text-green-600"></i><span id="sync-badge" class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>`;
+                    btnSync.innerHTML = `<i data-lucide="cloud-check" class="w-5 h-5 text-orange-500"></i><span id="sync-badge" class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-orange-500 border-2 border-white rounded-full"></span>`;
                 } else {
-                    btnSync.innerHTML = `<i data-lucide="cloud-off" class="w-5 h-5 text-gray-500"></i><span id="sync-badge" class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>`;
+                    btnSync.innerHTML = `<i data-lucide="cloud-off" class="w-5 h-5 text-gray-500"></i><span id="sync-badge" class="absolute top-1 right-1 w-2.5 h-2.5 bg-orange-500 border-2 border-white rounded-full"></span>`;
                 }
             }
             if (window.lucide) lucide.createIcons();
@@ -534,13 +531,14 @@
                 cell.onclick = () => { selectedDate = date; currentDate = new Date(date); updateUI(); };
 
                 let circleClass = "w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-[15px] sm:text-base font-medium smooth-transition ";
-                if (isSameDay(date, selectedDate)) circleClass += "bg-gray-900 text-white shadow-md transform scale-110";
-                else if (isSameDay(date, new Date())) circleClass += "bg-red-50 text-red-600 font-bold";
+                if (isSameDay(date, selectedDate)) circleClass += "bg-gray-900 text-white shadow-md transform scale-110 selected-circle";
+                else if (isSameDay(date, new Date())) circleClass += "bg-orange-50 text-orange-500 font-bold today-circle";
                 else circleClass += "text-gray-700 group-hover:bg-gray-100";
 
                 const span = document.createElement('div'); span.className = circleClass; span.textContent = i; cell.appendChild(span);
                 if (notesByDate[dateKey] && notesByDate[dateKey].length > 0) {
-                    const dot = document.createElement('div'); dot.className = `absolute bottom-1 w-1.5 h-1.5 rounded-full smooth-transition ${isSameDay(date, selectedDate) ? 'bg-white' : 'bg-red-500'}`; cell.appendChild(dot);
+                    const dotClass = isSameDay(date, selectedDate) ? 'bg-white calendar-dot-selected' : 'bg-orange-500 calendar-dot';
+                    const dot = document.createElement('div'); dot.className = `absolute bottom-1 w-1.5 h-1.5 rounded-full smooth-transition ${dotClass}`; cell.appendChild(dot);
                 }
                 elCalendarGrid.appendChild(cell);
             }
@@ -571,7 +569,7 @@
                 noteDiv.onclick = () => openPreview(note);
 
                 const iconContainer = document.createElement('div'); 
-                iconContainer.className = "w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0 text-red-500 group-hover:bg-red-100 smooth-transition"; 
+                iconContainer.className = "w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0 text-orange-500 group-hover:bg-orange-100 smooth-transition"; 
                 iconContainer.innerHTML = '<i data-lucide="align-left" class="w-5 h-5"></i>';
                 
                 const textContainer = document.createElement('div'); 
@@ -664,13 +662,16 @@
             }
         };
 
-        // --- SISTEMA DE MODO OSCURO (V2.4) ---
+        // --- SISTEMA DE MODO OSCURO (V2.5) ---
         const initTheme = () => {
-            const isDark = localStorage.getItem('darkMode') === 'true';
+            // Ahora la app arranca por defecto en modo oscuro si el usuario no ha dicho lo contrario
+            const savedTheme = localStorage.getItem('darkMode');
+            const isDark = savedTheme === null ? true : savedTheme === 'true'; 
+            
             if (isDark) {
                 document.body.classList.add('dark-mode');
-                updateThemeUI(true);
             }
+            updateThemeUI(isDark);
         };
 
         const toggleTheme = () => {
@@ -687,6 +688,10 @@
                 themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
                 if(window.lucide) lucide.createIcons();
             }
+            
+            // Actualizar la meta etiqueta del tema para que el navegador y la PWA cambien de color arriba
+            const metaTheme = document.querySelector('meta[name="theme-color"]');
+            if (metaTheme) metaTheme.setAttribute('content', isDark ? '#050505' : '#ffffff');
         };
 
         // --- SISTEMA DE NOTIFICACIONES AUTOMÁTICAS ---
@@ -732,7 +737,7 @@
         const initDataFlow = async () => {
             initWeekdays(); updateUI();
             requestPermissionsAuto(); startNotificationEngine(); 
-            initTheme(); // Iniciar el modo oscuro
+            initTheme();
 
             if (!auth || !db || isLocalFile) return;
 
